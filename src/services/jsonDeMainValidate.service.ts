@@ -1037,7 +1037,7 @@ class JSonDeMainValidateService {
       );
     }
 
-    if (data['remision']['kms']) {
+    if (!data['remision']['kms']) {
       this.errors.push('Debe especificar Kilometros estimado recorrido en data.remision.kms');
     }
 
@@ -1785,6 +1785,23 @@ class JSonDeMainValidateService {
           }
         }
       }
+
+      if (!data['detalleTransporte']['vehiculo']['marca']) {
+        this.errors.push('La marca del Vehiculo en data.transporte.vehiculo.marca no fue informado');
+      } else {
+        if (
+          !(
+            data['detalleTransporte']['vehiculo']['marca'].length >= 1 &&
+            data['detalleTransporte']['vehiculo']['marca'].length <= 10
+          )
+        ) {
+          this.errors.push(
+            "Marca del Vehiculo '" +
+              data['detalleTransporte']['vehiculo']['marca'] +
+              "' en data.transporte.vehiculo.marca debe tener una longitud de 1 a 10 caracteres",
+          );
+        }
+      }
     }
   }
 
@@ -1868,6 +1885,26 @@ class JSonDeMainValidateService {
       }
     } else {
       //No es contribuyente
+    }
+
+    if (!data['detalleTransporte']['transportista']['direccion']) {
+      this.errors.push(
+        'Es obligatorio especificar la dirección de la Empresa transportista en data.transporte.transportista.direccion',
+      );
+    } else {
+      //Validar longitud
+      if (
+        !(
+          data['detalleTransporte']['transportista']['direccion'].length >= 1 &&
+          data['detalleTransporte']['transportista']['direccion'].length <= 150
+        )
+      ) {
+        this.errors.push(
+          'La direccion de la Empresa Transportista (' +
+            data['detalleTransporte']['transportista']['direccion'] +
+            ') en data.transporte.transportista.direccion debe tener una longitud de 1 a 150 caracteres',
+        );
+      }
     }
 
     //Chofer - Obligatorio
