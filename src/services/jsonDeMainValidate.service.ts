@@ -458,6 +458,8 @@ class JSonDeMainValidateService {
   }
 
   private generateDatosGeneralesEmisorDEValidate(params: any, data: any) {
+    var regExpOnlyNumber = new RegExp(/^\d+$/);
+
     if (!(params && params.establecimientos)) {
       this.errors.push('Debe proveer un Array con la información de los establecimientos en params');
     }
@@ -503,6 +505,12 @@ class JSonDeMainValidateService {
       +establecimientoUsado.ciudad,
       this.errors,
     );
+
+    if (establecimientoUsado['numeroCasa']) {
+      if (!regExpOnlyNumber.test(establecimientoUsado['numeroCasa'])) {
+        this.errors.push('El Número de Casa en params.establecimientos*.numeroCasa debe ser numérico');
+      }
+    }
   }
 
   private generateDatosGeneralesResponsableGeneracionDEValidate(params: any, data: any) {
@@ -536,6 +544,21 @@ class JSonDeMainValidateService {
       return; //El error de cliente vacio, ya fue validado arriba
     }
 
+    if (!data['cliente']['tipoOperacion']) {
+      this.errors.push('Tipo de Operación del Cliente en data.cliente.tipoOperacion es requerido > 0');
+    } else {
+      if (
+        constanteService.tiposOperaciones.filter((um: any) => um.codigo === +data['cliente']['tipoOperacion']).length ==
+        0
+      ) {
+        this.errors.push(
+          "Tipo de Operación '" +
+            data['cliente']['tipoOperacion'] +
+            "' del Cliente en data.cliente.tipoOperacion no encontrado. Valores: " +
+            constanteService.tiposOperaciones.map((a: any) => a.codigo + '-' + a.descripcion),
+        );
+      }
+    }
     if (!data['cliente']['contribuyente'] && data['cliente']['tipoOperacion'] != 4) {
       if (
         constanteService.tiposDocumentosReceptor.filter((um: any) => um.codigo === +data['cliente']['documentoTipo'])
@@ -1993,6 +2016,15 @@ class JSonDeMainValidateService {
             'El número de documento del Chofer (' +
               data['detalleTransporte']['transportista']['chofer']['documentoNumero'] +
               ') en data.transporte.transportista.chofer.documentoNumero debe tener una longitud de 1 a 20 caracteres',
+          );
+        }
+
+        //Validar si tiene puntos
+        if ((data['detalleTransporte']['transportista']['chofer']['documentoNumero'] + '').includes('.')) {
+          this.errors.push(
+            'El número de documento del Chofer (' +
+              data['detalleTransporte']['transportista']['chofer']['documentoNumero'] +
+              ') en data.transporte.transportista.chofer.documentoNumero debe estar sin puntos',
           );
         }
       }
