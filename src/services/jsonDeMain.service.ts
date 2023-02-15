@@ -30,6 +30,7 @@ class JSonDeMainService {
           redondeoSedeco: true,
           decimals: 2,
           taxDecimals: 2,
+          pygDecimals: 0,
           userObjectRemove: false,
         };
 
@@ -72,7 +73,7 @@ class JSonDeMainService {
     this.generateDatosEspecificosPorTipoDE(params, data, config);
 
     if (data['tipoDocumento'] == 1 || data['tipoDocumento'] == 4) {
-      this.generateDatosCondicionOperacionDE(params, data);
+      this.generateDatosCondicionOperacionDE(params, data, config);
     }
 
     //['gDtipDE']=E001
@@ -273,6 +274,10 @@ class JSonDeMainService {
       data.autoFactura.documentoNumero = data.autoFactura.documento_numero;
     }
 
+    if (data.autoFactura?.numero_casa) {
+      data.autoFactura.numeroCasa = data.autoFactura.numero_casa;
+    }
+
     //Remision
     if (data.nota_credito_debito) {
       data.notaCreditoDebito = data.nota_credito_debito;
@@ -280,12 +285,32 @@ class JSonDeMainService {
 
     //Remision
     if (data.remision?.tipo_responsable) {
-      data.remision.tipoResponsable = data.remision.tipo_resonsable;
+      data.remision.tipoResponsable = data.remision.tipo_responsable;
     }
 
     //Documento Asociado
     if (data.documento_asociado) {
-      data.documentoAsociado = data.documento_asociado;
+      data.documentoAsociado = { ...data.documento_asociado };
+    }
+
+    if (data.documentoAsociado?.numero_retencion) {
+      data.documentoAsociado.numeroRetencion = data.documentoAsociado.numero_retencion;
+    }
+
+    if (data.documentoAsociado?.resolucion_credito_fiscal) {
+      data.documentoAsociado.resolucionCreditoFiscal = data.documentoAsociado.resolucion_credito_fiscal;
+    }
+
+    if (data.documentoAsociado?.constancia_tipo) {
+      data.documentoAsociado.constanciaTipo = data.documentoAsociado.constancia_tipo;
+    }
+
+    if (data.documentoAsociado?.constancia_numero) {
+      data.documentoAsociado.constanciaNumero = data.documentoAsociado.constancia_numero;
+    }
+
+    if (data.documentoAsociado?.constancia_control) {
+      data.documentoAsociado.constanciaControl = data.documentoAsociado.constancia_control;
     }
 
     //Condicion entregas
@@ -448,6 +473,142 @@ class JSonDeMainService {
     if (data.transporte) {
       //Nueva version quedara solamente data.trasnsporte
       data.detalleTransporte = { ...data.transporte };
+    }
+
+    if (data.detalleTransporte?.tipo_responsable) {
+      data.detalleTransporte.tipoResponsable = data.detalleTransporte.tipo_responsable;
+    }
+
+    if (data.detalleTransporte?.condicion_negociacion) {
+      data.detalleTransporte.condicionNegociacion = data.detalleTransporte.condicion_negociacion;
+    }
+
+    if (data.detalleTransporte?.numero_manifiesto) {
+      data.detalleTransporte.numeroManifiesto = data.detalleTransporte.numero_manifiesto;
+    }
+    if (data.detalleTransporte?.numero_despacho_importacion) {
+      data.detalleTransporte.numeroDespachoImportacion = data.detalleTransporte.numero_despacho_importacion;
+    }
+    if (data.detalleTransporte?.inicio_estimado_translado) {
+      data.detalleTransporte.inicioEstimadoTranslado = data.detalleTransporte.inicio_estimado_translado;
+    }
+    if (data.detalleTransporte?.fin_estimado_translado) {
+      data.detalleTransporte.finEstimadoTranslado = data.detalleTransporte.fin_estimado_translado;
+    }
+    if (data.detalleTransporte?.pais_destino) {
+      data.detalleTransporte.paisDestino = data.detalleTransporte.pais_destino;
+    }
+    if (data.detalleTransporte?.pais_destino_nombre) {
+      data.detalleTransporte.paisDestinoNombre = data.detalleTransporte.pais_destino_nombre;
+    }
+
+    //Falta los de salida, entrega, etc.
+
+    //Detalle de Transporte Salida
+    if (data.detalleTransporte?.salida?.numero_casa) {
+      //Nueva version quedara solamente data.trasnsporte
+      data.detalleTransporte.salida.numeroCasa = data.detalleTransporte.salida.numero_casa;
+    }
+    if (data.detalleTransporte?.salida?.complemento_direccion1) {
+      data.detalleTransporte.salida.complementoDireccion1 = data.detalleTransporte.salida.complemento_direccion1;
+    }
+    if (data.detalleTransporte?.salida?.complemento_direccion2) {
+      data.detalleTransporte.salida.complementoDireccion2 = data.detalleTransporte.salida.complemento_direccion2;
+    }
+    if (data.detalleTransporte?.salida?.departamento_descripcion) {
+      data.detalleTransporte.salida.departamentoDescripcion = data.detalleTransporte.salida.departamento_descripcion;
+    }
+    if (data.detalleTransporte?.salida?.distrito_descripcion) {
+      data.detalleTransporte.salida.distritoDescripcion = data.detalleTransporte.salida.distrito_descripcion;
+    }
+    if (data.detalleTransporte?.salida?.ciudad_descripcion) {
+      data.detalleTransporte.salida.ciudadDescripcion = data.detalleTransporte.salida.ciudad_descripcion;
+    }
+    if (data.detalleTransporte?.salida?.pais_descripcion) {
+      data.detalleTransporte.salida.paisDescripcion = data.detalleTransporte.salida.pais_descripcion;
+    }
+    if (data.detalleTransporte?.salida?.telefono_contacto) {
+      data.detalleTransporte.salida.telefonoContacto = data.detalleTransporte.salida.telefono_contacto;
+    }
+
+    //Detalle de Transporte Entrega
+    if (data.detalleTransporte?.entrega?.numero_casa) {
+      //Nueva version quedara solamente data.trasnsporte
+      data.detalleTransporte.entrega.numeroCasa = data.detalleTransporte.entrega.numero_casa;
+    }
+    if (data.detalleTransporte?.entrega?.complemento_direccion1) {
+      data.detalleTransporte.entrega.complementoDireccion1 = data.detalleTransporte.entrega.complemento_direccion1;
+    }
+    if (data.detalleTransporte?.entrega?.complemento_direccion2) {
+      data.detalleTransporte.entrega.complementoDireccion2 = data.detalleTransporte.entrega.complemento_direccion2;
+    }
+    if (data.detalleTransporte?.entrega?.departamento_descripcion) {
+      data.detalleTransporte.entrega.departamentoDescripcion = data.detalleTransporte.entrega.departamento_descripcion;
+    }
+    if (data.detalleTransporte?.entrega?.distrito_descripcion) {
+      data.detalleTransporte.entrega.distritoDescripcion = data.detalleTransporte.entrega.distrito_descripcion;
+    }
+    if (data.detalleTransporte?.entrega?.ciudad_descripcion) {
+      data.detalleTransporte.entrega.ciudadDescripcion = data.detalleTransporte.entrega.ciudad_descripcion;
+    }
+    if (data.detalleTransporte?.entrega?.pais_descripcion) {
+      data.detalleTransporte.entrega.paisDescripcion = data.detalleTransporte.entrega.pais_descripcion;
+    }
+    if (data.detalleTransporte?.entrega?.telefono_contacto) {
+      data.detalleTransporte.entrega.telefonoContacto = data.detalleTransporte.entrega.telefono_contacto;
+    }
+
+    // Detalle de Transporte Vehiculo
+    if (data.detalleTransporte?.vehiculo?.documento_tipo) {
+      data.detalleTransporte.vehiculo.documentoTipo = data.detalleTransporte.vehiculo.documento_tipo;
+    }
+    if (data.detalleTransporte?.vehiculo?.documento_numero) {
+      data.detalleTransporte.vehiculo.documentoNumero = data.detalleTransporte.vehiculo.documento_numero;
+    }
+    if (data.detalleTransporte?.vehiculo?.numero_matricula) {
+      data.detalleTransporte.vehiculo.numeroMatricula = data.detalleTransporte.vehiculo.numero_matricula;
+    }
+    if (data.detalleTransporte?.vehiculo?.numero_vuelo) {
+      data.detalleTransporte.vehiculo.numeroVuelo = data.detalleTransporte.vehiculo.numero_vuelo;
+    }
+
+    // Detalle de Transporte Transportista
+    if (data.detalleTransporte?.transportista?.documento_tipo) {
+      data.detalleTransporte.transportista.documentoTipo = data.detalleTransporte.transportista.documento_tipo;
+    }
+    if (data.detalleTransporte?.transportista?.documento_numero) {
+      data.detalleTransporte.transportista.documentoNumero = data.detalleTransporte.transportista.documento_numero;
+    }
+    if (data.detalleTransporte?.transportista?.pais_descripcion) {
+      data.detalleTransporte.transportista.paisDescripcion = data.detalleTransporte.transportista.pais_descripcion;
+    }
+
+    // Detalle de Transporte Transportista Chofer
+    if (data.detalleTransporte?.transportista?.chofer?.documento_numero) {
+      data.detalleTransporte.transportista.chofer.documentoNumero =
+        data.detalleTransporte.transportista.chofer.documento_numero;
+    }
+
+    // Data Complementarios
+    if (data.complementarios?.orden_compra) {
+      data.complementarios.ordenCompra = data.complementarios.orden_compra;
+    }
+    if (data.complementarios?.orden_venta) {
+      data.complementarios.ordenVenta = data.complementarios.orden_venta;
+    }
+    if (data.complementarios?.numero_asiento) {
+      data.complementarios.numeroAsiento = data.complementarios.numero_asiento;
+    }
+
+    // Data complementarios carga
+    if (data.complementarios?.carga?.orden_compra) {
+      data.complementarios.carga.ordenCompra = data.complementarios.carga.orden_compra;
+    }
+    if (data.complementarios?.carga?.orden_venta) {
+      data.complementarios.carga.ordenVenta = data.complementarios.carga.orden_venta;
+    }
+    if (data.complementarios?.carga?.numero_asiento) {
+      data.complementarios.carga.numeroAsiento = data.complementarios.carga.numero_asiento;
     }
 
     //Sector Energia
@@ -1327,7 +1488,7 @@ class JSonDeMainService {
    * @param data
    * @param options
    */
-  private generateDatosCondicionOperacionDE(params: any, data: any) {
+  private generateDatosCondicionOperacionDE(params: any, data: any, config: XmlgenConfig) {
     if (!data['condicion']) {
       return;
     }
@@ -1350,11 +1511,11 @@ class JSonDeMainService {
     };
 
     //if (data['condicion']['tipo'] === 1) {
-    this.generateDatosCondicionOperacionDE_Contado(params, data);
+    this.generateDatosCondicionOperacionDE_Contado(params, data, config);
     //}
 
     if (data['condicion']['tipo'] === 2) {
-      this.generateDatosCondicionOperacionDE_Credito(params, data);
+      this.generateDatosCondicionOperacionDE_Credito(params, data, config);
     }
   }
 
@@ -1365,7 +1526,7 @@ class JSonDeMainService {
    * @param data
    * @param options
    */
-  private generateDatosCondicionOperacionDE_Contado(params: any, data: any) {
+  private generateDatosCondicionOperacionDE_Contado(params: any, data: any, config: XmlgenConfig) {
     if (data['condicion']['tipo'] === 1) {
       if (!(data['condicion']['entregas'] && data['condicion']['entregas'].length > 0)) {
         /*throw new Error(
@@ -1395,10 +1556,16 @@ class JSonDeMainService {
           dDesTiPag: constanteService.condicionesTiposPagos.filter((co) => co.codigo === dataEntrega['tipo'])[0][
             'descripcion'
           ],
-          dMonTiPag: dataEntrega['monto'],
+          //dMonTiPag: dataEntrega['monto'],  //se agrega el redondeo de 4 decimales
           //cMoneTiPag: dataEntrega['3'],asdf
           //dTiCamTiPag : dataEntrega['cambio'],
         };
+
+        cuotaInicialEntrega['dMonTiPag'] = parseFloat(dataEntrega['monto']).toFixed(4);
+
+        if (data.moneda === 'PYG') {
+          cuotaInicialEntrega['dMonTiPag'] = parseFloat(dataEntrega['monto']).toFixed(config.pygDecimals);
+        }
 
         if (dataEntrega['tipo'] == 99) {
           cuotaInicialEntrega['dDesTiPag'] = dataEntrega['tipoDescripcion'];
@@ -1489,7 +1656,7 @@ class JSonDeMainService {
    * @param data
    * @param options
    */
-  private generateDatosCondicionOperacionDE_Credito(params: any, data: any) {
+  private generateDatosCondicionOperacionDE_Credito(params: any, data: any, config: XmlgenConfig) {
     if (!data['condicion']['credito']['tipo']) {
       /*throw new Error(
         'El tipo de Crédito en data.condicion.credito.tipo es obligatorio si la condición posee créditos',
@@ -1517,11 +1684,7 @@ class JSonDeMainService {
 
     if (+data['condicion']['credito']['tipo'] === 1) {
       //Plazo
-      if (!data['condicion']['credito']['plazo']) {
-        /*throw new Error(
-          'El tipo de Crédito en data.condicion.credito.tipo es 1 entonces data.condicion.credito.plazo es obligatorio',
-        );*/
-      }
+
       this.json['rDE']['DE']['gDtipDE']['gCamCond']['gPagCred']['dPlazoCre'] = data['condicion']['credito']['plazo'];
     }
 

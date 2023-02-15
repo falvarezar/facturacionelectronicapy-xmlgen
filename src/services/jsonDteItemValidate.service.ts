@@ -39,6 +39,20 @@ class JSonDteItemValidateService {
           );
         }
 
+        if (!item['ncm']) {
+          //this.errors.push('La descripción del item en data.items[' + i + '].ncm no puede ser null');
+        } else {
+          if (!(item['ncm'].length >= 6 && item['ncm'].length <= 8)) {
+            this.errors.push(
+              'El valor del campo NCM (' +
+                item['ncm'] +
+                ') en data.items[' +
+                i +
+                '].ncm debe tener una longitud de 6 a 8 caracteres',
+            );
+          }
+        }
+
         if (constanteService.unidadesMedidas.filter((um) => um.codigo === unidadMedida).length == 0) {
           this.errors.push(
             "Unidad de Medida '" +
@@ -51,19 +65,32 @@ class JSonDteItemValidateService {
         }
         if (data['tipoDocumento'] === 7) {
           if (!item['tolerancia']) {
-            this.errors.push(
-              'La Tolerancia es obligatoria para el Tipo de Documento = 7 en data.items[' + i + '].tolerancia',
-            );
-          }
-          if (constanteService.relevanciasMercaderias.filter((um) => um.codigo === item['tolerancia']).length == 0) {
-            this.errors.push(
-              "Tolerancia de Mercaderia '" +
-                item['tolerancia'] +
-                "' en data.items[" +
-                i +
-                '].tolerancia no encontrado. Valores: ' +
-                constanteService.relevanciasMercaderias.map((a) => a.codigo + '-' + a.descripcion),
-            );
+            /*this.errors.push(
+              'La Tolerancia es opcional para el Tipo de Documento = 7 en data.items[' + i + '].tolerancia',
+            );*/
+            //No es obligatorio
+          } else {
+            //Si tiene tolerancia, entonces valida
+            if (constanteService.relevanciasMercaderias.filter((um) => um.codigo === item['tolerancia']).length == 0) {
+              this.errors.push(
+                "Tolerancia de Mercaderia '" +
+                  item['tolerancia'] +
+                  "' en data.items[" +
+                  i +
+                  '].tolerancia no encontrado. Valores: ' +
+                  constanteService.relevanciasMercaderias.map((a) => a.codigo + '-' + a.descripcion),
+              );
+            }
+
+            if (!(item['toleranciaCantidad'] && item['toleranciaPorcentaje'])) {
+              this.errors.push(
+                'La Tolerancia require especificar la cantidad y porcentaje de quiebra o merma en data.items[' +
+                  i +
+                  '].toleranciaCantidad y data.items[' +
+                  i +
+                  '].toleranciaPorcenaje',
+              );
+            }
           }
         }
 
@@ -104,13 +131,15 @@ class JSonDteItemValidateService {
         }
 
         if (data.moneda == 'PYG') {
-          if ((item['precioUnitario'] + '').split('.')[1]?.length > 0) {
+          if ((item['precioUnitario'] + '').split('.')[1]?.length > (config.pygDecimals || 0)) {
             this.errors.push(
               'El Precio Unitario del item "' +
                 item['precioUnitario'] +
                 '" en "PYG" en data.items[' +
                 i +
-                '].precioUnitario, no puede contener decimales',
+                '].precioUnitario, no puede contener mas de ' +
+                (config.pygDecimals || 0) +
+                ' decimales',
             );
           }
         } else {
@@ -126,13 +155,15 @@ class JSonDteItemValidateService {
         }
 
         if (data.moneda == 'PYG') {
-          if ((item['descuento'] + '').split('.')[1]?.length > 0) {
+          if ((item['descuento'] + '').split('.')[1]?.length > (config.pygDecimals || 0)) {
             this.errors.push(
               'El Descuento del item "' +
                 item['descuento'] +
                 '" en "PYG" en data.items[' +
                 i +
-                '].descuento, no puede contener decimales',
+                '].descuento, no puede contener mas de ' +
+                (config.pygDecimals || 0) +
+                ' decimales',
             );
           }
         } else {
@@ -292,7 +323,7 @@ class JSonDteItemValidateService {
             item['precioUnitario'],
         );
       }
-
+      /*
       if (+item['descuento'] == +item['precioUnitario']) {
         //Validar IVA
         //Quiere decir que no va a ir nada en exenta, gravada5 y gravada10, para este item.
@@ -303,7 +334,7 @@ class JSonDteItemValidateService {
               '].ivaTipo',
           );
         }
-      }
+      }*/
     }
   }
 
@@ -407,7 +438,30 @@ class JSonDteItemValidateService {
    * @param options
    * @param items Es el item actual del array de items de "data" que se está iterando
    */
-  private generateDatosItemsOperacionRastreoMercaderiasValidate(params: any, data: any, item: any, i: number) {}
+  private generateDatosItemsOperacionRastreoMercaderiasValidate(params: any, data: any, item: any, i: number) {
+    let regexp = new RegExp('<[^>]*>'); //HTML/XML TAGS
+
+    if (item['registroEntidadComercial'] && item['registroEntidadComercial'].trim().length > 0) {
+      if (!(item['registroEntidadComercial'].length >= 20 && item['registroEntidadComercial'].length <= 20)) {
+        this.errors.push(
+          'El Número de Registro de la Entidad Comercial del item (' +
+            item['registroEntidadComercial'] +
+            ') en data.items[' +
+            i +
+            '].registroEntidadComercial debe tener una longitud de 20 caracteres',
+        );
+      }
+      if (regexp.test(item['registroEntidadComercial'])) {
+        this.errors.push(
+          'El Número de Registro de la Entidad Comercial del item (' +
+            item['registroEntidadComercial'] +
+            ') en data.items[' +
+            i +
+            '].registroEntidadComercial contiene valores inválidos',
+        );
+      }
+    }
+  }
 
   /**
    * E8.5. Sector de automotores nuevos y usados (E770-E789)

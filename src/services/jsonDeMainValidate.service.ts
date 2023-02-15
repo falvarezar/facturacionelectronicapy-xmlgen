@@ -488,27 +488,33 @@ class JSonDeMainValidateService {
     //Validacion de algunos datos de la sucursal
     const establecimientoUsado = params['establecimientos'].filter((e: any) => e.codigo === establecimiento)[0];
 
-    if (!establecimientoUsado.ciudad) {
-      this.errors.push('Debe proveer la Ciudad del establecimiento en params.establecimientos*.ciudad');
-    }
-    if (!establecimientoUsado.distrito) {
-      this.errors.push('Debe proveer la Distrito del establecimiento en params.establecimientos*.distrito');
-    }
-    if (!establecimientoUsado.departamento) {
-      this.errors.push('Debe proveer la Departamento del establecimiento en params.establecimientos*.departamento');
-    }
+    if (!establecimientoUsado) {
+      this.errors.push(
+        'Debe especificar los datos del Establecimiento "' + establecimiento + '" en params.establecimientos*',
+      );
+    } else {
+      if (!establecimientoUsado.ciudad) {
+        this.errors.push('Debe proveer la Ciudad del establecimiento en params.establecimientos*.ciudad');
+      }
+      if (!establecimientoUsado.distrito) {
+        this.errors.push('Debe proveer la Distrito del establecimiento en params.establecimientos*.distrito');
+      }
+      if (!establecimientoUsado.departamento) {
+        this.errors.push('Debe proveer la Departamento del establecimiento en params.establecimientos*.departamento');
+      }
 
-    constanteService.validateDepartamentoDistritoCiudad(
-      'params.establecimientos*',
-      +establecimientoUsado.departamento,
-      +establecimientoUsado.distrito,
-      +establecimientoUsado.ciudad,
-      this.errors,
-    );
+      constanteService.validateDepartamentoDistritoCiudad(
+        'params.establecimientos*',
+        +establecimientoUsado.departamento,
+        +establecimientoUsado.distrito,
+        +establecimientoUsado.ciudad,
+        this.errors,
+      );
 
-    if (establecimientoUsado['numeroCasa']) {
-      if (!regExpOnlyNumber.test(establecimientoUsado['numeroCasa'])) {
-        this.errors.push('El Número de Casa en params.establecimientos*.numeroCasa debe ser numérico');
+      if (establecimientoUsado['numeroCasa']) {
+        if (!regExpOnlyNumber.test(establecimientoUsado['numeroCasa'])) {
+          this.errors.push('El Número de Casa en params.establecimientos*.numeroCasa debe ser numérico');
+        }
       }
     }
   }
@@ -592,11 +598,12 @@ class JSonDeMainValidateService {
 
         const rucCliente = data['cliente']['ruc'].split('-');
 
-        if (!regExpOnlyNumber.test((rucCliente[0] + '').trim())) {
+        //Un RUC puede ser alphanumerico
+        /*if (!regExpOnlyNumber.test((rucCliente[0] + '').trim())) {
           this.errors.push(
             "La parte del RUC del Cliente '" + data['cliente']['ruc'] + "' en data.cliente.ruc debe ser numérico",
           );
-        }
+        }*/
         if (!regExpOnlyNumber.test((rucCliente[1] + '').trim())) {
           this.errors.push(
             "La parte del DV del RUC del Cliente '" +
@@ -605,9 +612,9 @@ class JSonDeMainValidateService {
           );
         }
 
-        if (rucCliente[0].length > 8) {
+        if (!(rucCliente[0].length >= 3 && rucCliente[0].length <= 8)) {
           this.errors.push(
-            "La parte del RUC '" + data['cliente']['ruc'] + "' en data.cliente.ruc debe contener de 1 a 8 caracteres",
+            "La parte del RUC '" + data['cliente']['ruc'] + "' en data.cliente.ruc debe contener de 3 a 8 caracteres",
           );
         }
 
@@ -678,6 +685,19 @@ class JSonDeMainValidateService {
         if (typeof data['cliente']['documentoNumero'] == 'undefined') {
           //Val.: 65
           this.errors.push('Debe informar el número de documento en data.cliente.documentoNumero');
+        } else {
+          //Validar que documentoNumero no tenga .
+          if ((data['cliente']['documentoNumero'] + '').indexOf('.') > -1) {
+            this.errors.push(
+              'El valor "' + data['cliente']['documentoNumero'] + '" en data.cliente.documentoNumero no es válido ',
+            );
+          }
+          //Validar que documentoNumero no tenga /
+          if ((data['cliente']['documentoNumero'] + '').indexOf('/') > -1) {
+            this.errors.push(
+              'El valor "' + data['cliente']['documentoNumero'] + '" en data.cliente.documentoNumero no es válido ',
+            );
+          }
         }
       }
     }
@@ -697,14 +717,34 @@ class JSonDeMainValidateService {
       this.errors.push('La naturaleza del Receptor debe ser "No contribuyente" para el Tipo de Operación = 4-B2F');
     }
 
-    if (data['tipoDocumento'] === 7 || data['cliente']['tipoOperacion'] === 4) {
+    //Temporal Mercosys
+    /*if (data['tipoDocumento'] === 7 || data['cliente']['tipoOperacion'] === 4) {
       if (!data['cliente']['direccion']) {
         this.errors.push('data.cliente.direccion es Obligatorio para Tipo de Documento 7 o Tipo de Operación 4');
+      }
+    }*/
+
+    if (data['tipoDocumento'] === 7) {
+      if (!data['cliente']['direccion']) {
+        this.errors.push('data.cliente.direccion es Obligatorio para Tipo de Documento 7');
       }
     }
 
     if (data['cliente']['direccion']) {
       //Si tiene dirección hay que completar numero de casa.
+
+      if (
+        !(
+          (data['cliente']['direccion'] + '').trim().length >= 1 &&
+          (data['cliente']['direccion'] + '').trim().length <= 255
+        )
+      ) {
+        this.errors.push(
+          "La dirección del Receptor '" +
+            data['cliente']['direccion'] +
+            "' en data.cliente.direccion debe tener de 1 a 255 caracteres",
+        );
+      }
 
       if (data['cliente']['numeroCasa'] == null) {
         this.errors.push('Debe informar el Número de casa del Receptor en data.cliente.numeroCasa');
@@ -844,14 +884,20 @@ class JSonDeMainValidateService {
       if (!(email.length >= 3 && email.length <= 80)) {
         this.errors.push("El valor '" + email + "' en data.cliente.email debe tener una longitud de 3 a 80 caracteres");
       }
+
+      //se valida el mail
+      var regExEmail = new RegExp(/^[A-Za-z0-9_!#$%&'*+\/=?`{|}~^.-]+@[A-Za-z0-9.-]+$/gm);
+      if (!regExEmail.test(email + '')) {
+        this.errors.push("El valor '" + email + "' en data.cliente.email es inválido");
+      }
     }
 
     if (data['cliente']['codigo']) {
-      if (!((data['cliente']['codigo'] + '').length >= 3)) {
+      if (!((data['cliente']['codigo'] + '').length >= 3 && (data['cliente']['codigo'] + '').length <= 15)) {
         this.errors.push(
           "El código del Cliente '" +
             data['cliente']['codigo'] +
-            "' en data.cliente.codigo debe tener al menos 3 caracteres",
+            "' en data.cliente.codigo debe tener de 3 a 15 caracteres",
         );
       }
     }
@@ -1040,18 +1086,18 @@ class JSonDeMainValidateService {
   private generateDatosEspecificosPorTipoDE_NotaCreditoDebitoValidate(params: any, data: any) {
     if (!(data['notaCreditoDebito']['motivo'] && data['notaCreditoDebito']['motivo'])) {
       this.errors.push('Debe completar el motivo para la nota de crédito/débito en data.notaCreditoDebito.motivo');
-    }
-
-    if (
-      constanteService.notasCreditosMotivos.filter((um: any) => um.codigo === data['notaCreditoDebito']['motivo'])
-        .length == 0
-    ) {
-      this.errors.push(
-        "Motivo de la Nota de Crédito/Débito '" +
-          data['notaCreditoDebito']['motivo'] +
-          "' en data.notaCreditoDebito.motivo no encontrado. Valores: " +
-          constanteService.notasCreditosMotivos.map((a: any) => a.codigo + '-' + a.descripcion),
-      );
+    } else {
+      if (
+        constanteService.notasCreditosMotivos.filter((um: any) => um.codigo === +data['notaCreditoDebito']['motivo'])
+          .length == 0
+      ) {
+        this.errors.push(
+          "Motivo de la Nota de Crédito/Débito '" +
+            data['notaCreditoDebito']['motivo'] +
+            "' en data.notaCreditoDebito.motivo no encontrado. Valores: " +
+            constanteService.notasCreditosMotivos.map((a: any) => a.codigo + '-' + a.descripcion),
+        );
+      }
     }
   }
 
@@ -1072,7 +1118,7 @@ class JSonDeMainValidateService {
       this.errors.push('No fue pasado el Tipo de Responsable de la Remisión en data.remision.tipoResponsable.');
     }
 
-    if (constanteService.remisionesMotivos.filter((um: any) => um.codigo === data['remision']['motivo']).length == 0) {
+    if (constanteService.remisionesMotivos.filter((um: any) => um.codigo === +data['remision']['motivo']).length == 0) {
       this.errors.push(
         "Motivo de la Remisión '" +
           data['remision']['motivo'] +
@@ -1082,6 +1128,7 @@ class JSonDeMainValidateService {
     }
 
     if (!data['remision']['kms']) {
+      //analizar por que se puso
       this.errors.push('Debe especificar Kilometros estimado recorrido en data.remision.kms');
     }
 
@@ -1280,24 +1327,47 @@ class JSonDeMainValidateService {
         if (dataEntrega['tipo'] === 3 || dataEntrega['tipo'] === 4) {
           if (!dataEntrega['infoTarjeta']) {
             this.errors.push(
-              'Debe informar sobre la tarjeta en data.condicion.entregas[' +
+              'Debe informar los datos de la tarjeta en data.condicion.entregas[' +
                 i +
                 '].infoTarjeta si la forma de Pago es a Tarjeta',
             );
           } else {
-            if (
-              constanteService.tarjetasCreditosTipos.filter(
-                (um: any) => um.codigo === dataEntrega['infoTarjeta']['tipo'],
-              ).length == 0
-            ) {
+            if (!dataEntrega['infoTarjeta']['tipo']) {
               this.errors.push(
-                "Tipo de Tarjeta de Crédito '" +
-                  dataEntrega['infoTarjeta']['tipo'] +
-                  "' en data.condicion.entregas[" +
+                'Debe especificar el tipo de tarjeta en data.condicion.entregas[' +
                   i +
-                  '].infoTarjeta.tipo no encontrado. Valores: ' +
-                  constanteService.tarjetasCreditosTipos.map((a: any) => a.codigo + '-' + a.descripcion),
+                  '].infoTarjeta.tipo si la forma de Pago es a Tarjeta',
               );
+            } else {
+              if (
+                constanteService.tarjetasCreditosTipos.filter(
+                  (um: any) => um.codigo === dataEntrega['infoTarjeta']['tipo'],
+                ).length == 0
+              ) {
+                this.errors.push(
+                  "Tipo de Tarjeta '" +
+                    dataEntrega['infoTarjeta']['tipo'] +
+                    "' en data.condicion.entregas[" +
+                    i +
+                    '].infoTarjeta.tipo no encontrado. Valores: ' +
+                    constanteService.tarjetasCreditosTipos.map((a: any) => a.codigo + '-' + a.descripcion),
+                );
+              }
+
+              if (dataEntrega['infoTarjeta']['tipoDescripcion']) {
+                if (
+                  !(
+                    (dataEntrega['infoTarjeta']['tipoDescripcion'] + '').length >= 4 &&
+                    (dataEntrega['infoTarjeta']['tipoDescripcion'] + '').length <= 20
+                  )
+                ) {
+                  this.errors.push(
+                    'La descripción del Tipo de Tarjeta en data.condicion.entregas[' +
+                      i +
+                      '].infoTarjeta.tipoDescripcion debe tener de 4 a 20 caracteres',
+                  );
+                }
+              }
             }
 
             if (dataEntrega['infoTarjeta']['ruc']) {
@@ -1312,7 +1382,8 @@ class JSonDeMainValidateService {
               var regExpOnlyNumber = new RegExp(/^\d+$/);
               const rucCliente = dataEntrega['infoTarjeta']['ruc'].split('-');
 
-              if (!regExpOnlyNumber.test((rucCliente[0] + '').trim())) {
+              //Un RUC puede ser alphanumerico
+              /*if (!regExpOnlyNumber.test((rucCliente[0] + '').trim())) {
                 this.errors.push(
                   "La parte del RUC del Cliente '" +
                     dataEntrega['infoTarjeta']['ruc'] +
@@ -1320,7 +1391,7 @@ class JSonDeMainValidateService {
                     i +
                     '].infoTarjeta.ruc debe ser numérico',
                 );
-              }
+              }*/
               if (!regExpOnlyNumber.test((rucCliente[1] + '').trim())) {
                 this.errors.push(
                   "La parte del DV del RUC del Cliente '" +
@@ -1331,7 +1402,7 @@ class JSonDeMainValidateService {
                 );
               }
 
-              if (rucCliente[0].length > 8) {
+              if (!(rucCliente[0].length >= 3 && rucCliente[0].length <= 8)) {
                 this.errors.push(
                   "La parte del RUC '" +
                     dataEntrega['infoTarjeta']['ruc'] +
@@ -1363,6 +1434,41 @@ class JSonDeMainValidateService {
                   'El código de Autorización en data.condicion.entregas[' +
                     i +
                     '].infoTarjeta.codigoAutorizacion debe tener de 6 y 10 caracteres',
+                );
+              }
+            }
+
+            if (dataEntrega['infoTarjeta']['titular']) {
+              if (
+                !(
+                  (dataEntrega['infoTarjeta']['titular'] + '').length >= 4 &&
+                  (dataEntrega['infoTarjeta']['titular'] + '').length <= 30
+                )
+              ) {
+                this.errors.push(
+                  'El Titular de la Tarjeta en data.condicion.entregas[' +
+                    i +
+                    '].infoTarjeta.titular debe tener de 4 y 30 caracteres',
+                );
+              }
+              //Validar que titular no tenga .
+              if (dataEntrega['infoTarjeta']['titular'].indexOf('.') > -1) {
+                this.errors.push(
+                  'El valor "' +
+                    dataEntrega['infoTarjeta']['titular'] +
+                    '" en data.condicion.entregas[' +
+                    i +
+                    '].infoTarjeta.titular no es válido ',
+                );
+              }
+              //Validar que titular no tenga /
+              if (dataEntrega['infoTarjeta']['titular'].indexOf('/') > -1) {
+                this.errors.push(
+                  'El valor "' +
+                    dataEntrega['infoTarjeta']['titular'] +
+                    '" en data.condicion.entregas[' +
+                    i +
+                    '].infoTarjeta.titular no es válido ',
                 );
               }
             }
@@ -1415,18 +1521,19 @@ class JSonDeMainValidateService {
       this.errors.push(
         'El tipo de Crédito en data.condicion.credito.tipo es obligatorio si la condición posee créditos',
       );
-    }
-
-    if (
-      constanteService.condicionesCreditosTipos.filter((um: any) => um.codigo === data['condicion']['credito']['tipo'])
-        .length == 0
-    ) {
-      this.errors.push(
-        "Tipo de Crédito '" +
-          data['condicion']['credito']['tipo'] +
-          "' en data.condicion.credito.tipo no encontrado. Valores: " +
-          constanteService.condicionesCreditosTipos.map((a: any) => a.codigo + '-' + a.descripcion),
-      );
+    } else {
+      if (
+        constanteService.condicionesCreditosTipos.filter(
+          (um: any) => um.codigo === data['condicion']['credito']['tipo'],
+        ).length == 0
+      ) {
+        this.errors.push(
+          "Tipo de Crédito '" +
+            data['condicion']['credito']['tipo'] +
+            "' en data.condicion.credito.tipo no encontrado. Valores: " +
+            constanteService.condicionesCreditosTipos.map((a: any) => a.codigo + '-' + a.descripcion),
+        );
+      }
     }
 
     if (+data['condicion']['credito']['tipo'] === 1) {
@@ -1435,6 +1542,17 @@ class JSonDeMainValidateService {
         this.errors.push(
           'El tipo de Crédito en data.condicion.credito.tipo es 1 entonces data.condicion.credito.plazo es obligatorio',
         );
+      } else {
+        if (
+          !(
+            (data['condicion']['credito']['plazo'] + '').length >= 2 &&
+            (data['condicion']['credito']['plazo'] + '').length <= 15
+          )
+        ) {
+          this.errors.push(
+            'El Plazo de Crédito en data.condicion.credito.plazo debe contener entre 2 y 15 caracteres ',
+          );
+        }
       }
     }
 
@@ -1444,12 +1562,12 @@ class JSonDeMainValidateService {
         this.errors.push(
           'El tipo de Crédito en data.condicion.credito.tipo es 2 entonces data.condicion.credito.cuotas es obligatorio',
         );
+      } else {
       }
-    }
 
-    //Recorrer array de infoCuotas e informar en el JSON
-    if (data['condicion']['credito']['tipo'] === 2) {
-      //A Cuotas
+      //Si es Cuotas
+      //Recorrer array de infoCuotas e informar en el JSON
+
       if (data['condicion']['credito']['infoCuotas'] && data['condicion']['credito']['infoCuotas'].length > 0) {
         for (let i = 0; i < data['condicion']['credito']['infoCuotas'].length; i++) {
           const infoCuota = data['condicion']['credito']['infoCuotas'][i];
@@ -1463,6 +1581,21 @@ class JSonDeMainValidateService {
                 '].moneda no encontrado. Valores: ' +
                 constanteService.monedas.map((a: any) => a.codigo + '-' + a.descripcion),
             );
+          }
+
+          if (!infoCuota['vencimiento']) {
+            //No es obligatorio
+            //this.errors.push('Obligatorio informar data.transporte.inicioEstimadoTranslado. Formato yyyy-MM-dd');
+          } else {
+            if (!fechaUtilService.isIsoDate(infoCuota['vencimiento'])) {
+              this.errors.push(
+                "Vencimiento de la Cuota '" +
+                  infoCuota['vencimiento'] +
+                  "' en data.condicion.credito.infoCuotas[" +
+                  i +
+                  '].vencimiento no válido. Formato: yyyy-MM-dd',
+              );
+            }
           }
         }
       } else {
@@ -1710,7 +1843,7 @@ class JSonDeMainValidateService {
       );
     }
 
-    if (
+    /*if (
       constanteService.condicionesNegociaciones.filter(
         (um) => um.codigo === data['detalleTransporte']['condicionNegociacion'],
       ).length == 0
@@ -1721,10 +1854,12 @@ class JSonDeMainValidateService {
           "' en data.transporte.condicionNegociacion no encontrado. Valores: " +
           constanteService.condicionesNegociaciones.map((a) => a.codigo + '-' + a.descripcion),
       );
-    }
+    }*/
 
     this.generateDatosSalidaValidate(params, data);
-    this.generateDatosEntregaValidate(params, data);
+    if (data['detalleTransporte']['entrega']) {
+      this.generateDatosEntregaValidate(params, data);
+    }
     this.generateDatosVehiculoValidate(params, data);
     if (data['detalleTransporte']['transportista']) {
       this.generateDatosTransportistaValidate(params, data);
@@ -1740,13 +1875,62 @@ class JSonDeMainValidateService {
    * @param items Es el item actual del array de items de "data" que se está iterando
    */
   private generateDatosSalidaValidate(params: any, data: any) {
-    constanteService.validateDepartamentoDistritoCiudad(
-      'data.transporte.salida',
-      +data['detalleTransporte']['salida']['departamento'],
-      +data['detalleTransporte']['salida']['distrito'],
-      +data['detalleTransporte']['salida']['ciudad'],
-      this.errors,
-    );
+    let errorDepDisCiu = false;
+    if (!data['detalleTransporte']['salida']['departamento']) {
+      this.errors.push('Debe especificar el Departamento del Local de Salida en data.transporte.salida.departamento');
+      errorDepDisCiu = true;
+    }
+    if (!data['detalleTransporte']['salida']['distrito']) {
+      this.errors.push('Debe especificar el Distrito del Local de Salida en data.transporte.salida.distrito');
+      errorDepDisCiu = true;
+    }
+    if (!data['detalleTransporte']['salida']['ciudad']) {
+      this.errors.push('Debe especificar la Ciudad del Local de Salida en data.transporte.salida.ciudad');
+      errorDepDisCiu = true;
+    }
+
+    if (!errorDepDisCiu) {
+      constanteService.validateDepartamentoDistritoCiudad(
+        'data.transporte.salida',
+        +data['detalleTransporte']['salida']['departamento'],
+        +data['detalleTransporte']['salida']['distrito'],
+        +data['detalleTransporte']['salida']['ciudad'],
+        this.errors,
+      );
+    }
+
+    if (!data['detalleTransporte']['salida']['direccion']) {
+      this.errors.push('Debe especificar la Dirección del Local de Salida en data.transporte.salida.direccion');
+    } else {
+      if (
+        !(
+          data['detalleTransporte']['salida']['direccion'].length >= 1 &&
+          data['detalleTransporte']['salida']['direccion'].length <= 255
+        )
+      ) {
+        this.errors.push(
+          "Dirección del Local de Salida '" +
+            data['detalleTransporte']['salida']['direccion'] +
+            "' en data.transporte.salida.direccion debe tener una longitud de 1 a 255 caracteres",
+        );
+      }
+    }
+    if (!data['detalleTransporte']['salida']['numeroCasa']) {
+      this.errors.push('Debe especificar el Número de Casa del Local de Salida en data.transporte.salida.numeroCasa');
+    } else {
+      if (
+        !(
+          data['detalleTransporte']['salida']['numeroCasa'].length >= 1 &&
+          data['detalleTransporte']['salida']['numeroCasa'].length <= 255
+        )
+      ) {
+        this.errors.push(
+          "Número de Casa del Local de Salida '" +
+            data['detalleTransporte']['salida']['numeroCasa'] +
+            "' en data.transporte.salida.numeroCasa debe tener una longitud de 1 a 255 caracteres",
+        );
+      }
+    }
   }
 
   /**
@@ -1758,6 +1942,30 @@ class JSonDeMainValidateService {
    * @param items Es el item actual del array de items de "data" que se está iterando
    */
   private generateDatosEntregaValidate(params: any, data: any) {
+    let errorDepDisCiu = false;
+    if (!data['detalleTransporte']['entrega']['departamento']) {
+      this.errors.push('Debe especificar el Departamento del Local de Entrega en data.transporte.entrega.departamento');
+      errorDepDisCiu = true;
+    }
+    if (!data['detalleTransporte']['entrega']['distrito']) {
+      this.errors.push('Debe especificar el Distrito del Local de Entrega en data.transporte.entrega.distrito');
+      errorDepDisCiu = true;
+    }
+    if (!data['detalleTransporte']['entrega']['ciudad']) {
+      this.errors.push('Debe especificar la Ciudad del Local de Entrega en data.transporte.entrega.ciudad');
+      errorDepDisCiu = true;
+    }
+
+    if (!errorDepDisCiu) {
+      constanteService.validateDepartamentoDistritoCiudad(
+        'data.transporte.entrega',
+        +data['detalleTransporte']['entrega']['departamento'],
+        +data['detalleTransporte']['entrega']['distrito'],
+        +data['detalleTransporte']['entrega']['ciudad'],
+        this.errors,
+      );
+    }
+
     /*
       const jsonResult: any = {
         dDirLocEnt: data['detalleTransporte']['entrega']['direccion'],
@@ -1779,6 +1987,38 @@ class JSonDeMainValidateService {
         //dTelEnt : data['detalleTransporte']['entrega']['telefonoContacto'],
       };
     */
+    if (!data['detalleTransporte']['entrega']['direccion']) {
+      this.errors.push('Debe especificar la Dirección del Local de Entrega en data.transporte.entrega.direccion');
+    } else {
+      if (
+        !(
+          data['detalleTransporte']['entrega']['direccion'].length >= 1 &&
+          data['detalleTransporte']['entrega']['direccion'].length <= 255
+        )
+      ) {
+        this.errors.push(
+          "Dirección del Local de Entrega '" +
+            data['detalleTransporte']['entrega']['direccion'] +
+            "' en data.transporte.entrega.direccion debe tener una longitud de 1 a 255 caracteres",
+        );
+      }
+    }
+    if (!data['detalleTransporte']['entrega']['numeroCasa']) {
+      this.errors.push('Debe especificar el Número de Casa del Local de Entrega en data.transporte.entrega.numeroCasa');
+    } else {
+      if (
+        !(
+          data['detalleTransporte']['entrega']['numeroCasa'].length >= 1 &&
+          data['detalleTransporte']['entrega']['numeroCasa'].length <= 255
+        )
+      ) {
+        this.errors.push(
+          "Número de Casa del Local de Entrega '" +
+            data['detalleTransporte']['entrega']['numeroCasa'] +
+            "' en data.transporte.entrega.numeroCasa debe tener una longitud de 1 a 255 caracteres",
+        );
+      }
+    }
   }
 
   /**
@@ -1909,13 +2149,14 @@ class JSonDeMainValidateService {
           var regExpOnlyNumber = new RegExp(/^\d+$/);
           const rucCliente = data['detalleTransporte']['transportista']['ruc'].split('-');
 
-          if (!regExpOnlyNumber.test((rucCliente[0] + '').trim())) {
+          //Un RUC puede ser alphanumerico
+          /*if (!regExpOnlyNumber.test((rucCliente[0] + '').trim())) {
             this.errors.push(
               "La parte del RUC del Cliente '" +
                 data['detalleTransporte']['transportista']['ruc'] +
                 "' en data.transporte.transportista.ruc debe ser numérico",
             );
-          }
+          }*/
           if (!regExpOnlyNumber.test((rucCliente[1] + '').trim())) {
             this.errors.push(
               "La parte del DV del RUC del Cliente '" +
@@ -1924,7 +2165,7 @@ class JSonDeMainValidateService {
             );
           }
 
-          if (rucCliente[0].length > 8) {
+          if (!(rucCliente[0].length >= 3 && rucCliente[0].length <= 8)) {
             this.errors.push(
               "La parte del RUC '" +
                 data['detalleTransporte']['transportista']['ruc'] +
@@ -2083,13 +2324,14 @@ class JSonDeMainValidateService {
       var regExpOnlyNumber = new RegExp(/^\d+$/);
       const rucCliente = data['detalleTransporte']['transportista']['agente']['ruc'].split('-');
 
-      if (!regExpOnlyNumber.test((rucCliente[0] + '').trim())) {
+      //Un RUC puede ser alphanumerico
+      /*if (!regExpOnlyNumber.test((rucCliente[0] + '').trim())) {
         this.errors.push(
           "La parte del RUC del Cliente '" +
             data['detalleTransporte']['transportista']['agente']['ruc'] +
             "' en data.transporte.transportista.agente.ruc debe ser numérico",
         );
-      }
+      }*/
       if (!regExpOnlyNumber.test((rucCliente[1] + '').trim())) {
         this.errors.push(
           "La parte del DV del RUC del Cliente '" +
@@ -2098,11 +2340,11 @@ class JSonDeMainValidateService {
         );
       }
 
-      if (rucCliente[0].length > 8) {
+      if (!(rucCliente[0].length >= 3 && rucCliente[0].length <= 8)) {
         this.errors.push(
           "La parte del RUC '" +
             data['detalleTransporte']['transportista']['agente']['ruc'] +
-            "' en data.transporte.transportista.agente.ruc debe contener de 1 a 8 caracteres",
+            "' en data.transporte.transportista.agente.ruc debe contener de 3 a 8 caracteres",
         );
       }
 

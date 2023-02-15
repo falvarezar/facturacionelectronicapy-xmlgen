@@ -10,26 +10,6 @@ class JSonDteTransporteService {
    * @param options
    */
   public generateDatosTransporte(params: any, data: any) {
-    if (data['tipoDocumento'] == 7) {
-      if (!(data['detalleTransporte'] && data['detalleTransporte']['tipo'] && data['detalleTransporte']['tipo'] > 0)) {
-        //throw new Error('Obligatorio informar detalleTransporte.tipo');
-      }
-    }
-    if (data['detalleTransporte'] && data['detalleTransporte']['condicionNegociacion']) {
-      if (constanteService.condicionesNegociaciones.indexOf(data['detalleTransporte']['condicionNegociacion']) < -1) {
-        /*throw new Error(
-          'detalleTransporte.condicionNegociación (' +
-            data['detalleTransporte']['condicionNegociacion'] +
-            ') no válido',
-        );*/
-      }
-    }
-    if (data['tipoDocumento'] == 7) {
-      if (data['inicioEstimadoTranslado']) {
-        //throw new Error('Obligatorio informar detalleTransporte.inicioEstimadoTranslado');
-      }
-    }
-
     const jsonResult: any = {
       iTipTrans: data['detalleTransporte']['tipo'],
       dDesTipTrans: constanteService.tiposTransportes.filter((tt) => tt.codigo == data['detalleTransporte']['tipo'])[0][
@@ -40,9 +20,12 @@ class JSonDteTransporteService {
         (mt) => mt.codigo == data['detalleTransporte']['modalidad'],
       )[0]['descripcion'],
       iRespFlete: data['detalleTransporte']['tipoResponsable'],
-      cCondNeg: data['detalleTransporte']['condicionNegociacion'],
+      //cCondNeg: data['detalleTransporte']['condicionNegociacion'],
     };
 
+    if (data['detalleTransporte']['condicionNegociacion']) {
+      jsonResult['cCondNeg'] = data['detalleTransporte']['condicionNegociacion'];
+    }
     if (data['detalleTransporte']['numeroManifiesto']) {
       jsonResult['dNuManif'] = data['detalleTransporte']['numeroManifiesto'];
     }
@@ -65,8 +48,13 @@ class JSonDteTransporteService {
     }
 
     jsonResult['gCamSal'] = this.generateDatosSalida(params, data);
-    jsonResult['gCamEnt'] = this.generateDatosEntrega(params, data);
+
+    if (data['detalleTransporte']['entrega']) {
+      jsonResult['gCamEnt'] = this.generateDatosEntrega(params, data);
+    }
+
     jsonResult['gVehTras'] = this.generateDatosVehiculo(params, data);
+
     if (data['detalleTransporte']['transportista']) {
       jsonResult['gCamTrans'] = this.generateDatosTransportista(params, data);
     }
@@ -152,19 +140,29 @@ class JSonDteTransporteService {
       jsonResult['dComp2Ent'] = data['detalleTransporte']['entrega']['complementoDireccion2'];
     }
 
-    jsonResult['cDepEnt'] = data['detalleTransporte']['entrega']['departamento'];
+    if (data['detalleTransporte']['entrega']['departamento']) {
+      jsonResult['cDepEnt'] = +data['detalleTransporte']['entrega']['departamento'];
 
-    jsonResult['dDesDepEnt'] = constanteService.departamentos.filter(
-      (td) => td.codigo === data['detalleTransporte']['entrega']['departamento'],
-    )[0]['descripcion'];
-    jsonResult['cDisEnt'] = data['detalleTransporte']['entrega']['distrito'];
-    jsonResult['dDesDisEnt'] = constanteService.distritos.filter(
-      (td) => td.codigo === data['detalleTransporte']['entrega']['distrito'],
-    )[0]['descripcion'];
-    jsonResult['cCiuEnt'] = data['detalleTransporte']['entrega']['ciudad'];
-    jsonResult['dDesCiuEnt'] = constanteService.ciudades.filter(
-      (td) => td.codigo === data['detalleTransporte']['entrega']['ciudad'],
-    )[0]['descripcion'];
+      jsonResult['dDesDepEnt'] = constanteService.departamentos.filter(
+        (td) => td.codigo === +data['detalleTransporte']['entrega']['departamento'],
+      )[0]['descripcion'];
+    }
+
+    if (data['detalleTransporte']['entrega']['distrito']) {
+      jsonResult['cDisEnt'] = +data['detalleTransporte']['entrega']['distrito'];
+
+      jsonResult['dDesDisEnt'] = constanteService.distritos.filter(
+        (td) => td.codigo === +data['detalleTransporte']['entrega']['distrito'],
+      )[0]['descripcion'];
+    }
+
+    if (data['detalleTransporte']['entrega']['ciudad']) {
+      jsonResult['cCiuEnt'] = +data['detalleTransporte']['entrega']['ciudad'];
+
+      jsonResult['dDesCiuEnt'] = constanteService.ciudades.filter(
+        (td) => td.codigo === +data['detalleTransporte']['entrega']['ciudad'],
+      )[0]['descripcion'];
+    }
 
     if (
       data['detalleTransporte'] &&
