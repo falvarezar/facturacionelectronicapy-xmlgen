@@ -121,10 +121,23 @@ class JSonDeMainService {
     ) {
       //this.json['rDE']['DE']['gDtipDE']['gCamDEAsoc'] = jsonDteIdentificacionDocumento.generateDatosDocumentoAsociado(params, data);
       if (data['documentoAsociado']) {
-        this.json['rDE']['DE']['gCamDEAsoc'] = jsonDteIdentificacionDocumento.generateDatosDocumentoAsociado(
-          params,
-          data,
-        );
+        if (!Array.isArray(data['documentoAsociado'])) {
+          this.json['rDE']['DE']['gCamDEAsoc'] = jsonDteIdentificacionDocumento.generateDatosDocumentoAsociado(
+            params,
+            data['documentoAsociado'],
+          );
+        } else {
+          //Caso sea un array.
+          this.json['rDE']['DE']['gCamDEAsoc'] = new Array();
+
+          for (var i = 0; i < data['documentoAsociado'].length; i++) {
+            const dataDocumentoAsociado = data['documentoAsociado'][i];
+
+            this.json['rDE']['DE']['gCamDEAsoc'].push(
+              jsonDteIdentificacionDocumento.generateDatosDocumentoAsociado(params, dataDocumentoAsociado),
+            );
+          }
+        }
       }
     }
     var builder = new xml2js.Builder({
@@ -1458,12 +1471,12 @@ class JSonDeMainService {
   private generateDatosEspecificosPorTipoDE_RemisionElectronica(params: any, data: any) {
     this.json['rDE']['DE']['gDtipDE']['gCamNRE'] = {
       iMotEmiNR: +data['remision']['motivo'], //E501
-      dDesMotEmiNR: constanteService.remisionesMotivos.filter((nv) => nv.codigo === data['remision']['motivo'])[0][
+      dDesMotEmiNR: constanteService.remisionesMotivos.filter((nv) => nv.codigo === +data['remision']['motivo'])[0][
         'descripcion'
       ],
-      iRespEmiNR: data['remision']['tipoResponsable'],
+      iRespEmiNR: +data['remision']['tipoResponsable'],
       dDesRespEmiNR: constanteService.remisionesResponsables.filter(
-        (nv) => nv.codigo === data['remision']['tipoResponsable'],
+        (nv) => nv.codigo === +data['remision']['tipoResponsable'],
       )[0]['descripcion'],
     };
 
@@ -1729,13 +1742,15 @@ class JSonDeMainService {
             );*/
           }
 
-          const gCuotas = {
+          const gCuotas: any = {
             cMoneCuo: infoCuota['moneda'],
             dDMoneCuo: constanteService.monedas.filter((co) => co.codigo === infoCuota['moneda'])[0]['descripcion'],
             dMonCuota: infoCuota['monto'],
-            dVencCuo: infoCuota['vencimiento'],
           };
 
+          if (infoCuota['vencimiento']) {
+            gCuotas['dVencCuo'] = infoCuota['vencimiento'];
+          }
           this.json['rDE']['DE']['gDtipDE']['gCamCond']['gPagCred']['gCuotas'].push(gCuotas);
         }
       } else {
