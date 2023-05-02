@@ -32,6 +32,7 @@ class JSonDeMainService {
           taxDecimals: 2,
           pygDecimals: 0,
           userObjectRemove: false,
+          test: false, //Para ambiente de test se debe informar true por "config" exterior..
         };
 
         defaultConfig = Object.assign(defaultConfig, config);
@@ -1176,18 +1177,19 @@ class JSonDeMainService {
       this.json['rDE']['DE']['gDatGralOpe']['gDatRec']['dRucRec'] = (data['cliente']['ruc'].split('-')[0] + '').trim();
       this.json['rDE']['DE']['gDatGralOpe']['gDatRec']['dDVRec'] = (data['cliente']['ruc'].split('-')[1] + '').trim();
     }
+
     if (!data['cliente']['contribuyente'] && data['cliente']['tipoOperacion']) {
       //Obligatorio completar D210
 
       if (data['cliente']['documentoTipo']) {
-        this.json['rDE']['DE']['gDatGralOpe']['gDatRec']['iTipIDRec'] = data['cliente']['documentoTipo'];
+        this.json['rDE']['DE']['gDatGralOpe']['gDatRec']['iTipIDRec'] = +data['cliente']['documentoTipo'];
         this.json['rDE']['DE']['gDatGralOpe']['gDatRec']['dDTipIDRec'] =
-          constanteService.tiposDocumentosReceptor.filter((tdr) => tdr.codigo === data['cliente']['documentoTipo'])[0][
+          constanteService.tiposDocumentosReceptor.filter((tdr) => tdr.codigo === +data['cliente']['documentoTipo'])[0][
             'descripcion'
           ];
       }
 
-      if (data['cliente']['documentoTipo'] == 9) {
+      if (+data['cliente']['documentoTipo'] == 9) {
         this.json['rDE']['DE']['gDatGralOpe']['gDatRec']['dDTipIDRec'] = data['cliente']['documentoTipoDescripcion'];
       }
 
@@ -1218,35 +1220,26 @@ class JSonDeMainService {
     }
 
     //
-    if (data['cliente']['direccion'] && data['cliente']['tipoOperacion'] != 4) {
+    if (data['cliente']['direccion'] && +data['cliente']['tipoOperacion'] != 4) {
       this.json['rDE']['DE']['gDatGralOpe']['gDatRec']['cDepRec'] = +data['cliente']['departamento'];
       this.json['rDE']['DE']['gDatGralOpe']['gDatRec']['dDesDepRec'] = constanteService.departamentos.filter(
         (td) => td.codigo === +data['cliente']['departamento'],
       )[0]['descripcion'];
     }
 
-    if (data['cliente']['direccion'] && data['cliente']['tipoOperacion'] != 4) {
+    if (data['cliente']['direccion'] && +data['cliente']['tipoOperacion'] != 4) {
       this.json['rDE']['DE']['gDatGralOpe']['gDatRec']['cDisRec'] = +data['cliente']['distrito'];
       this.json['rDE']['DE']['gDatGralOpe']['gDatRec']['dDesDisRec'] = constanteService.distritos.filter(
         (td) => td.codigo === +data['cliente']['distrito'],
       )[0]['descripcion'];
     }
 
-    if (data['cliente']['direccion'] && data['cliente']['tipoOperacion'] != 4) {
+    if (data['cliente']['direccion'] && +data['cliente']['tipoOperacion'] != 4) {
       this.json['rDE']['DE']['gDatGralOpe']['gDatRec']['cCiuRec'] = +data['cliente']['ciudad'];
       this.json['rDE']['DE']['gDatGralOpe']['gDatRec']['dDesCiuRec'] = constanteService.ciudades.filter(
         (td) => td.codigo === +data['cliente']['ciudad'],
       )[0]['descripcion'];
     }
-
-    /*
-    constanteService.validateDepartamentoDistritoCiudad(
-      'data.cliente',
-      +data['cliente']['departamento'],
-      +data['cliente']['distrito'],
-      +data['cliente']['ciudad'], this.errors
-    );
-    */
 
     //Asignar null a departamento, distrito y ciudad si tipoOperacion = 4
 
@@ -1420,21 +1413,6 @@ class JSonDeMainService {
         (td) => td.codigo === +data['autoFactura']['ubicacion']['ciudad'],
       )[0]['descripcion'],
     };
-
-    /*
-    constanteService.validateDepartamentoDistritoCiudad(
-      'data.autoFactura',
-      +data['autoFactura']['departamento'],
-      +data['autoFactura']['distrito'],
-      +data['autoFactura']['ciudad'],
-    );
-    constanteService.validateDepartamentoDistritoCiudad(
-      'data.autoFactura.ubicacion',
-      +data['autoFactura']['ubicacion']['departamento'],
-      +data['autoFactura']['ubicacion']['distrito'],
-      +data['autoFactura']['ubicacion']['ciudad'],
-    );
-    */
   }
 
   private generateDatosEspecificosPorTipoDE_NotaCreditoDebito(params: any, data: any) {
