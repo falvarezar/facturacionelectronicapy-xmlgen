@@ -41,7 +41,7 @@ class JSonDteItemService {
 
         gCamItem['cUniMed'] = item['unidadMedida'];
         gCamItem['dDesUniMed'] = constanteService.unidadesMedidas
-          .filter((um) => um.codigo === item['unidadMedida'])[0]
+          .filter((um) => um.codigo === +item['unidadMedida'])[0]
           ['representacion'].trim();
 
         gCamItem['dCantProSer'] = item['cantidad'];
@@ -297,6 +297,7 @@ class JSonDteItemService {
       jsonResult['dTotOpeItem'] = parseFloat(valores + '') * parseFloat(item['cantidad']);
 
       jsonResult['dTotOpeItem'] = parseFloat(jsonResult['dTotOpeItem'].toFixed(config.decimals));
+
       if (data.moneda === 'PYG') {
         jsonResult['dTotOpeItem'] = parseFloat(jsonResult['dTotOpeItem'].toFixed(config.pygDecimals));
       }
@@ -335,7 +336,9 @@ class JSonDteItemService {
   ) {
     const jsonResult: any = {
       iAfecIVA: item['ivaTipo'], //E731
-      dDesAfecIVA: constanteService.codigosAfectaciones.filter((ca) => ca.codigo === item['ivaTipo'])[0]['descripcion'],
+      dDesAfecIVA: constanteService.codigosAfectaciones.filter((ca) => ca.codigo === +item['ivaTipo'])[0][
+        'descripcion'
+      ],
       dPropIVA: item['ivaBase'], //E733
       dTasaIVA: item['iva'], //E734
     };
@@ -379,7 +382,7 @@ class JSonDteItemService {
       }
 
       //Vigencia en Test y Produccion
-      if (new Date().getTime() >= new Date('2023-05-21').getTime()) {
+      if (new Date().getTime() >= new Date('2023-06-17').getTime()) {
         //Si la fecha de hoy ya supera el plazo de entrada en vigor ya no importa, utiliza la nueva forma.
         /**
         * Cambios en NT13
@@ -397,9 +400,9 @@ class JSonDteItemService {
       //Redondeo inicial a 2 decimales
       if (jsonResult['dBasGravIVA']) {
         jsonResult['dBasGravIVA'] = parseFloat(jsonResult['dBasGravIVA'].toFixed(8)); //Calculo intermedio, usa max decimales de la SET.
-        if (data.moneda === 'PYG') {
+        /*if (data.moneda === 'PYG') {
           jsonResult['dBasGravIVA'] = parseFloat(jsonResult['dBasGravIVA'].toFixed(config.pygDecimals));
-        }
+        }*/
       }
     }
 
@@ -414,10 +417,13 @@ class JSonDteItemService {
       jsonResult['dLiqIVAItem'] = (jsonResult['dBasGravIVA'] * item['iva']) / 100;
 
       //Redondeo
-      jsonResult['dLiqIVAItem'] = parseFloat(jsonResult['dLiqIVAItem'].toFixed(config.taxDecimals));
+      //jsonResult['dLiqIVAItem'] = parseFloat(jsonResult['dLiqIVAItem'].toFixed(config.taxDecimals)); //Calculo intermedio
+      jsonResult['dLiqIVAItem'] = parseFloat(jsonResult['dLiqIVAItem'].toFixed(8));
+      /*
+      Se desabilita por que da error en el calculo global, cuando muy tempranamente se redondea.
       if (data.moneda === 'PYG') {
         jsonResult['dLiqIVAItem'] = parseFloat(jsonResult['dLiqIVAItem'].toFixed(config.pygDecimals));
-      }
+      }*/
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -445,16 +451,16 @@ class JSonDteItemService {
           //Redondeo inicial a 2 decimales
           if (jsonResult['dBasExe']) {
             jsonResult['dBasExe'] = parseFloat(jsonResult['dBasExe'].toFixed(8)); //Calculo intermedio, usa max decimales de la SET.
-            if (data.moneda === 'PYG') {
+            /*if (data.moneda === 'PYG') {
               jsonResult['dBasExe'] = parseFloat(jsonResult['dBasExe'].toFixed(config.pygDecimals));
-            }
+            }*/
           }
         }
       }
     }
 
     //Vigencia en test y produccion
-    if (new Date().getTime() >= new Date('2023-05-21').getTime()) {
+    if (new Date().getTime() >= new Date('2023-06-17').getTime()) {
       //No importando si es test o produccion, luego del plazo de entrada en vigor en produccion ya aplica igualmente.
       jsonResult['dBasExe'] = 0; //Valor por defecto E737
       if (item['ivaTipo'] == 4) {
@@ -475,9 +481,9 @@ class JSonDteItemService {
         //Redondeo inicial a 2 decimales
         if (jsonResult['dBasExe']) {
           jsonResult['dBasExe'] = parseFloat(jsonResult['dBasExe'].toFixed(8)); //Calculo intermedio, usa max decimales de la SET.
-          if (data.moneda === 'PYG') {
+          /*if (data.moneda === 'PYG') {
             jsonResult['dBasExe'] = parseFloat(jsonResult['dBasExe'].toFixed(config.pygDecimals));
-          }
+          }*/
         }
       }
     }

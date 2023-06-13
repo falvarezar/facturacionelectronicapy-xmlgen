@@ -31,6 +31,7 @@ class JSonDeMainService {
           decimals: 2,
           taxDecimals: 2,
           pygDecimals: 0,
+          pygTaxDecimals: 0,
           userObjectRemove: false,
           test: false, //Para ambiente de test se debe informar true por "config" exterior..
         };
@@ -313,6 +314,10 @@ class JSonDeMainService {
 
     if (data.documentoAsociado?.resolucion_credito_fiscal) {
       data.documentoAsociado.resolucionCreditoFiscal = data.documentoAsociado.resolucion_credito_fiscal;
+    }
+
+    if (data.documentoAsociado?.tipo_documento_impreso) {
+      data.documentoAsociado.tipoDocumentoImpreso = data.documentoAsociado.tipo_documento_impreso;
     }
 
     if (data.documentoAsociado?.constancia_tipo) {
@@ -690,16 +695,17 @@ class JSonDeMainService {
    * @param data
    */
   private addDefaultValues(data: any) {
-    if (constanteService.tiposDocumentos.filter((um) => um.codigo === data['tipoDocumento']).length == 0) {
+    if (constanteService.tiposDocumentos.filter((um) => um.codigo === +data['tipoDocumento']).length == 0) {
       //No quitar este throw
-      throw (
-        new Error("Tipo de Documento '" + data['tipoDocumento']) +
-        "' en data.tipoDocumento no válido. Valores: " +
-        constanteService.tiposDocumentos.map((a) => a.codigo + '-' + a.descripcion)
+      throw new Error(
+        "Tipo de Documento '" +
+          data['tipoDocumento'] +
+          "' en data.tipoDocumento no válido. Valores: " +
+          constanteService.tiposDocumentos.map((a) => a.codigo + '-' + a.descripcion),
       );
     }
     data['tipoDocumentoDescripcion'] = constanteService.tiposDocumentos.filter(
-      (td) => td.codigo == data['tipoDocumento'],
+      (td) => td.codigo == +data['tipoDocumento'],
     )[0]['descripcion'];
 
     if (!data['tipoEmision']) {
@@ -906,49 +912,9 @@ class JSonDeMainService {
       return; //No informa si el tipo de documento es 7
     }
 
-    if (!data['tipoImpuesto']) {
-      //throw new Error('Debe especificar el Tipo de Impuesto en data.tipoImpuesto');
-    }
-
-    if (constanteService.tiposImpuestos.filter((um) => um.codigo === data['tipoImpuesto']).length == 0) {
-      /*throw new Error(
-        "Tipo de Impuesto '" +
-          data['tipoImpuesto'] +
-          "' en data.tipoImpuesto no válido. Valores: " +
-          constanteService.tiposImpuestos.map((a) => a.codigo + '-' + a.descripcion),
-      );*/
-    }
-
     let moneda = data['moneda'];
     if (!moneda && config.defaultValues === true) {
       moneda = 'PYG';
-    }
-
-    if (constanteService.monedas.filter((um) => um.codigo === moneda).length == 0) {
-      /*throw new Error(
-        "Moneda '" +
-          moneda +
-          "' en data.moneda no válido. Valores: " +
-          constanteService.monedas.map((a) => a.codigo + '-' + a.descripcion),
-      );*/
-    }
-    if (data['condicionAnticipo']) {
-      if (constanteService.globalPorItem.filter((um) => um.codigo === data['condicionAnticipo']).length == 0) {
-        /*throw new Error(
-          "Condición de Anticipo '" +
-            data['condicionAnticipo'] +
-            "' en data.condicionAnticipo no válido. Valores: " +
-            constanteService.globalPorItem.map((a) => a.codigo + '-Anticipo ' + a.descripcion),
-        );*/
-      }
-    }
-    if (constanteService.tiposTransacciones.filter((um) => um.codigo === data['tipoTransaccion']).length == 0) {
-      /*throw new Error(
-        "Tipo de Transacción '" +
-          data['tipoTransaccion'] +
-          "' en data.tipoTransaccion no válido. Valores: " +
-          constanteService.tiposTransacciones.map((a) => a.codigo + '-' + a.descripcion),
-      );*/
     }
 
     this.json['rDE']['DE']['gDatGralOpe']['gOpeCom'] = {};
@@ -1167,7 +1133,7 @@ class JSonDeMainService {
   private generateDatosGeneralesReceptorDE(params: any, data: any) {
     this.json['rDE']['DE']['gDatGralOpe']['gDatRec'] = {
       iNatRec: data['cliente']['contribuyente'] ? 1 : 2,
-      iTiOpe: data['cliente']['tipoOperacion'],
+      iTiOpe: +data['cliente']['tipoOperacion'],
       cPaisRec: data['cliente']['pais'],
       dDesPaisRe: constanteService.paises.filter((pais) => pais.codigo === data['cliente']['pais'])[0]['descripcion'],
     };
@@ -1417,9 +1383,9 @@ class JSonDeMainService {
 
   private generateDatosEspecificosPorTipoDE_NotaCreditoDebito(params: any, data: any) {
     this.json['rDE']['DE']['gDtipDE']['gCamNCDE'] = {
-      iMotEmi: data['notaCreditoDebito']['motivo'],
+      iMotEmi: +data['notaCreditoDebito']['motivo'],
       dDesMotEmi: constanteService.notasCreditosMotivos.filter(
-        (nv) => nv.codigo === data['notaCreditoDebito']['motivo'],
+        (nv) => nv.codigo === +data['notaCreditoDebito']['motivo'],
       )[0]['descripcion'],
     };
   }
