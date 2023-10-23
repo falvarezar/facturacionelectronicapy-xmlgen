@@ -200,6 +200,8 @@ class JSonDeMainService {
    * @param data
    */
   private removeUnderscoreAndPutCamelCase(data: any) {
+    const regExpOnlyNumber = new RegExp(/^\d+$/);
+
     if (data.tipo_documento) {
       data.tipoDocumento = data.tipo_documento;
     }
@@ -384,7 +386,10 @@ class JSonDeMainService {
         if (item.unidad_medida) {
           item.unidadMedida = item.unidad_medida;
         }
-        if (item.precio_unitario) {
+
+        //if (item.precio_unitario) {
+        //Los valores numericos que pueden aceptar 0 hay que validar de esta manera.
+        if (item['precio_unitario'] != null && (item['precio_unitario'] + '').length > 0) {
           item.precioUnitario = item.precio_unitario;
         }
         if (item.tolerancia_cantidad) {
@@ -1093,7 +1098,7 @@ class JSonDeMainService {
     this.json['rDE']['DE']['gDatGralOpe']['gEmis']['gRespDE'] = {
       iTipIDRespDE: data['usuario']['documentoTipo'],
       dDTipIDRespDE: constanteService.tiposDocumentosIdentidades.filter(
-        (td) => td.codigo === data['usuario']['documentoTipo'],
+        (td) => td.codigo === +data['usuario']['documentoTipo'],
       )[0]['descripcion'],
     };
 
