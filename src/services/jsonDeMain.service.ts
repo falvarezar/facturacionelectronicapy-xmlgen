@@ -31,6 +31,7 @@ class JSonDeMainService {
           decimals: 2,
           taxDecimals: 2,
           pygDecimals: 0,
+          partialTaxDecimals: 8,
           pygTaxDecimals: 0,
           userObjectRemove: false,
           test: false, //Para ambiente de test se debe informar true por "config" exterior..
@@ -186,8 +187,62 @@ class JSonDeMainService {
         (data['fecha'] + '').substring(5, 7) +
         (data['fecha'] + '').substring(8, 10);
     } else {
+      this.validateCamposDelCDC(params, data);
+
       this.codigoSeguridad = stringUtilService.leftZero(data.codigoSeguridadAleatorio, 9);
       this.codigoControl = jsonDteAlgoritmos.generateCodigoControl(params, data, this.codigoSeguridad);
+    }
+  }
+
+  private validateCamposDelCDC(params: any, data: any) {
+    //Validar campos básicos para el código de control
+    if (!params.ruc) {
+      throw new Error('Debe completar Tipo de Documento en params.ruc');
+    }
+    if (!data.tipoDocumento) {
+      throw new Error('Debe completar Tipo de Documento en data.tipoDocumento');
+    }
+    if (!data.establecimiento) {
+      throw new Error('Debe completar Establecimiento de la Emisión en data.establecimiento');
+    }
+    if (!data.punto) {
+      throw new Error('Debe completar el Punto de emisión en data.punto');
+    }
+    if (!data.numero) {
+      throw new Error('Debe completar el Número de Documento en data.numero');
+    }
+    if (!data.fecha) {
+      throw new Error('Debe completar la Fecha de Emisión en data.fecha');
+    }
+
+    if (!(params.ruc.indexOf('-') >= 0)) {
+      throw new Error('El RUC del Emisor debe contener el DV en params.ruc');
+    }
+
+    let rucEmisor = params['ruc'].split('-')[0];
+    let dvEmisor = params['ruc'].split('-')[1];
+
+    if ((rucEmisor + '').length > 8) {
+      throw new Error('La parte del RUC del Emisor no puede superar los 8 caracteres');
+    }
+    if ((dvEmisor + '').length > 1) {
+      throw new Error('El DV del RUC del Emisor no puede superar 1 caracter');
+    }
+
+    if ((data.tipoDocumento + '').length > 1) {
+      throw new Error('El Tipo de Documento no puede superar 1 digito en data.tipoDocumento');
+    }
+    if ((data.establecimiento + '').length > 3) {
+      throw new Error('El Establecimiento no puede superar 3 digitos en data.establecimiento');
+    }
+    if ((data.punto + '').length > 3) {
+      throw new Error('El Punto de Emisión no puede superar 3 digitos en data.punto');
+    }
+    if ((data.numero + '').length > 7) {
+      throw new Error('El Número de Documento no puede superar 7 digitos en data.numero');
+    }
+    if ((data.fecha + '').length > 19) {
+      throw new Error('La Fecha de Emisión no puede superar los 19 caracteres en data.fecha');
     }
   }
 
@@ -230,6 +285,10 @@ class JSonDeMainService {
       data.condicionTipoCambio = data.condicion_tipo_cambio;
     }
 
+    if (data.descuento_global) {
+      data.descuentoGlobal = data.descuento_global;
+    }
+
     //Objeto Cliente
     if (data.cliente?.razon_social) {
       data.cliente.razonSocial = data.cliente.razon_social;
@@ -243,7 +302,9 @@ class JSonDeMainService {
 
     //Campo que puede ser un numero = 0, hay que validar de esta forma
     if (typeof data.cliente != 'undefined' && typeof data.cliente.numero_casa != 'undefined') {
-      data.cliente.numeroCasa = data.cliente.numero_casa + '';
+      if (data.cliente.numero_casa != null) {
+        data.cliente.numeroCasa = data.cliente.numero_casa + '';
+      }
     }
     if (data.cliente?.tipo_contribuyente) {
       data.cliente.tipoContribuyente = data.cliente.tipo_contribuyente;
@@ -291,9 +352,15 @@ class JSonDeMainService {
       data.autoFactura.documentoNumero = data.autoFactura.documento_numero;
     }
 
-    if (data.autoFactura?.numero_casa) {
-      data.autoFactura.numeroCasa = data.autoFactura.numero_casa;
+    if (typeof data.autoFactura != 'undefined' && typeof data.autoFactura.numero_casa != 'undefined') {
+      if (data.autoFactura.numero_casa != null) {
+        data.autoFactura.numeroCasa = data.autoFactura.numero_casa + '';
+      }
     }
+
+    /*if (data.autoFactura?.numero_casa) {
+      data.autoFactura.numeroCasa = data.autoFactura.numero_casa;
+    }*/
 
     //Remision
     if (data.nota_credito_debito) {
@@ -303,6 +370,14 @@ class JSonDeMainService {
     //Remision
     if (data.remision?.tipo_responsable) {
       data.remision.tipoResponsable = data.remision.tipo_responsable;
+    }
+
+    if (data.remision?.fecha_factura) {
+      data.remision.fechaFactura = data.remision.fecha_factura;
+    }
+
+    if (data.remision?.costo_flete) {
+      data.remision.costoFlete = data.remision.costo_flete;
     }
 
     //Documento Asociado
@@ -764,7 +839,10 @@ class JSonDeMainService {
 
     const id = this.codigoControl;
 
-    const fechaFirmaDigital = new Date(params.fechaFirmaDigital);
+    let fechaFirmaDigital = new Date();
+    if (data.fechaFirmaDigital) {
+      fechaFirmaDigital = new Date(data.fechaFirmaDigital);
+    }
 
     let digitoVerificadorString = this.codigoControl + '';
 
@@ -773,7 +851,7 @@ class JSonDeMainService {
         Id: id,
       },
       dDVId: digitoVerificadorString.substring(digitoVerificadorString.length - 1, digitoVerificadorString.length),
-      dFecFirma: fechaUtilService.convertToJSONFormat(new Date()),
+      dFecFirma: fechaUtilService.convertToJSONFormat(fechaFirmaDigital),
       dSisFact: 1,
     };
 
@@ -970,6 +1048,21 @@ class JSonDeMainService {
       this.json['rDE']['DE']['gDatGralOpe']['gOpeCom']['dDesCondAnt'] =
         'Anticipo ' +
         constanteService.globalPorItem.filter((ca) => ca.codigo == data['condicionAnticipo'])[0]['descripcion'];
+    }
+
+    if (data['obligaciones'] && Array.isArray(data['obligaciones'])) {
+      let gOblAfe = new Array();
+      for (let i = 0; i < data['obligaciones'].length; i++) {
+        let gOblAfeItem: any = {};
+        gOblAfeItem['cOblAfe'] = data['obligaciones'][i]['codigo'];
+        //gOblAfeItem['dDesOblAfe'] = params['obligaciones'][i]['descripcion'];
+        gOblAfeItem['dDesOblAfe'] = constanteService.obligaciones.filter(
+          (ca) => ca.codigo == +data['obligaciones'][i]['codigo'],
+        )[0]['descripcion'];
+        gOblAfe.push(gOblAfeItem);
+      }
+
+      this.json['rDE']['DE']['gDatGralOpe']['gOpeCom']['gOblAfe'] = gOblAfe;
     }
   }
 
@@ -1175,14 +1268,11 @@ class JSonDeMainService {
       if (+data['cliente']['documentoTipo'] === 5) {
         //Si es innominado completar con cero
         this.json['rDE']['DE']['gDatGralOpe']['gDatRec']['dNumIDRec'] = '0';
+        this.json['rDE']['DE']['gDatGralOpe']['gDatRec']['dNomRec'] = 'Sin Nombre';
       }
     }
 
     this.json['rDE']['DE']['gDatGralOpe']['gDatRec']['dNomRec'] = data['cliente']['razonSocial'].trim();
-
-    if (+data['cliente']['documentoTipo'] === 5) {
-      this.json['rDE']['DE']['gDatGralOpe']['gDatRec']['dNomRec'] = 'Sin Nombre';
-    }
 
     if (data['cliente']['nombreFantasia']) {
       this.json['rDE']['DE']['gDatGralOpe']['gDatRec']['dNomFanRec'] = data['cliente']['nombreFantasia'].trim();
@@ -1254,18 +1344,18 @@ class JSonDeMainService {
   private generateDatosEspecificosPorTipoDE(params: any, data: any, config: XmlgenConfig) {
     this.json['rDE']['DE']['gDtipDE'] = {};
 
-    if (data['tipoDocumento'] === 1) {
+    if (+data['tipoDocumento'] === 1) {
       this.generateDatosEspecificosPorTipoDE_FacturaElectronica(params, data, config);
     }
-    if (data['tipoDocumento'] === 4) {
+    if (+data['tipoDocumento'] === 4) {
       this.generateDatosEspecificosPorTipoDE_Autofactura(params, data);
     }
 
-    if (data['tipoDocumento'] === 5 || data['tipoDocumento'] === 6) {
+    if (+data['tipoDocumento'] === 5 || data['tipoDocumento'] === 6) {
       this.generateDatosEspecificosPorTipoDE_NotaCreditoDebito(params, data);
     }
 
-    if (data['tipoDocumento'] === 7) {
+    if (+data['tipoDocumento'] === 7) {
       this.generateDatosEspecificosPorTipoDE_RemisionElectronica(params, data);
     }
   }
@@ -1279,7 +1369,8 @@ class JSonDeMainService {
    */
   private generateDatosEspecificosPorTipoDE_FacturaElectronica(params: any, data: any, config: XmlgenConfig) {
     if (
-      constanteService.indicadoresPresencias.filter((um: any) => um.codigo === data['factura']['presencia']).length == 0
+      constanteService.indicadoresPresencias.filter((um: any) => um.codigo === +data['factura']['presencia']).length ==
+      0
     ) {
       /*throw new Error(
         "Indicador de Presencia '" +
@@ -1291,9 +1382,9 @@ class JSonDeMainService {
 
     this.json['rDE']['DE']['gDtipDE']['gCamFE'] = {
       iIndPres: data['factura']['presencia'],
-      dDesIndPres: constanteService.indicadoresPresencias.filter((ip) => ip.codigo === data['factura']['presencia'])[0][
-        'descripcion'
-      ],
+      dDesIndPres: constanteService.indicadoresPresencias.filter(
+        (ip) => ip.codigo === +data['factura']['presencia'],
+      )[0]['descripcion'],
       //dFecEmNR : data['factura']['fechaEnvio']
     };
 
@@ -1473,45 +1564,28 @@ class JSonDeMainService {
    * @param options
    */
   private generateDatosCondicionOperacionDE_Contado(params: any, data: any, config: XmlgenConfig) {
-    if (data['condicion']['tipo'] === 1) {
-      if (!(data['condicion']['entregas'] && data['condicion']['entregas'].length > 0)) {
-        /*throw new Error(
-          'El Tipo de Condición es 1 en data.condicion.tipo pero no se encontraron entregas en data.condicion.entregas',
-        );*/
-      }
-    }
-
     if (data['condicion']['entregas'] && data['condicion']['entregas'].length > 0) {
       const entregas = [];
       for (let i = 0; i < data['condicion']['entregas'].length; i++) {
         const dataEntrega = data['condicion']['entregas'][i];
-
-        if (constanteService.condicionesTiposPagos.filter((um: any) => um.codigo === dataEntrega['tipo']).length == 0) {
-          /*throw new Error(
-            "Condición de Tipo de Pago '" +
-              dataEntrega['tipo'] +
-              "' en data.condicion.entregas[" +
-              i +
-              '].tipo no encontrado. Valores: ' +
-              constanteService.condicionesTiposPagos.map((a: any) => a.codigo + '-' + a.descripcion),
-          );*/
-        }
 
         const cuotaInicialEntrega: any = {
           iTiPago: dataEntrega['tipo'],
           dDesTiPag: constanteService.condicionesTiposPagos.filter((co) => co.codigo === dataEntrega['tipo'])[0][
             'descripcion'
           ],
-          //dMonTiPag: dataEntrega['monto'],  //se agrega el redondeo de 4 decimales
-          //cMoneTiPag: dataEntrega['3'],asdf
-          //dTiCamTiPag : dataEntrega['cambio'],
         };
 
         cuotaInicialEntrega['dMonTiPag'] = parseFloat(dataEntrega['monto']).toFixed(4);
 
-        if (data.moneda === 'PYG') {
-          cuotaInicialEntrega['dMonTiPag'] = parseFloat(dataEntrega['monto']).toFixed(config.pygDecimals);
-        }
+        /*if (data.moneda === 'PYG') {
+          //Maximo 4 decimales
+          let cantDecimalesMontoTipoPago = config.pygDecimals;
+          if (cantDecimalesMontoTipoPago > 4) {
+            cantDecimalesMontoTipoPago = 4;
+          }
+          cuotaInicialEntrega['dMonTiPag'] = parseFloat(dataEntrega['monto']).toFixed(cantDecimalesMontoTipoPago);
+        }*/
 
         if (dataEntrega['tipo'] == 99) {
           cuotaInicialEntrega['dDesTiPag'] = dataEntrega['tipoDescripcion'];
@@ -1701,6 +1775,10 @@ class JSonDeMainService {
     xml = xml.split('>  <').join('><');
     xml = xml.replace(/\r?\n|\r/g, '');
     return xml;
+  }
+
+  getPaises() {
+    return constanteService.paises;
   }
 
   getDepartamentos() {

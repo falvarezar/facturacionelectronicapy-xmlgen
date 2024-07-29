@@ -187,6 +187,53 @@ class ConstanteService {
     },
   ];
 
+  obligaciones = [
+    {
+      codigo: 113,
+      descripcion: 'IMPUESTO A LA RENTA IRACIS - REGÍMENES ESPECIALES',
+    },
+    {
+      codigo: 143,
+      descripcion: 'TRIBUTO UNICO MAQUILA',
+    },
+    {
+      codigo: 211,
+      descripcion: 'IMPUESTO AL VALOR AGREGADO - GRAVADAS Y EXONERADAS - EXPORTADORES',
+    },
+    {
+      codigo: 311,
+      descripcion: 'IMPUESTO SELECTIVO AL CONSUMO - GENERAL',
+    },
+    {
+      codigo: 321,
+      descripcion: 'IMPUESTO SELECTIVO AL CONSUMO COMBUSTIBLES',
+    },
+    {
+      codigo: 700,
+      descripcion: 'IMPUESTO A LA RENTA EMPRESARIAL - RÉGIMEN GENERAL',
+    },
+    {
+      codigo: 701,
+      descripcion: 'IMPUESTO A LA RENTA EMPRESARIAL - SIMPLE',
+    },
+    {
+      codigo: 703,
+      descripcion: 'IMPUESTO DE ZONA FRANCA',
+    },
+    {
+      codigo: 702,
+      descripcion: 'IMPUESTO A LA RENTA EMPRESARIAL - RESIMPLE',
+    },
+    {
+      codigo: 715,
+      descripcion: 'IMPUESTO A LA RENTA PERSONAL - SERVICIOS PERSONALES',
+    },
+    {
+      codigo: 716,
+      descripcion: 'IMPUESTO A LA RENTA PERSONAL - RENTAS Y GANANCIAS DE CAPITAL',
+    },
+  ];
+
   monedas = [
     { codigo: 'AED', descripcion: 'Dirham' },
     { codigo: 'AFN', descripcion: 'Afghani' },
@@ -456,6 +503,25 @@ class ConstanteService {
     {
       codigo: 9,
       descripcion: 'Otro',
+    },
+  ];
+
+  tiposDocumentosIdentidadesTransportistas = [
+    {
+      codigo: 1,
+      descripcion: 'Cédula paraguaya',
+    },
+    {
+      codigo: 2,
+      descripcion: 'Pasaporte',
+    },
+    {
+      codigo: 3,
+      descripcion: 'Cédula extranjera',
+    },
+    {
+      codigo: 4,
+      descripcion: 'Carnet de residencia',
     },
   ];
 
@@ -883,7 +949,7 @@ class ConstanteService {
     { codigo: 93, representacion: 'CM3   ', descripcion: 'Centimetros cubicos         ' },
     { codigo: 94, representacion: 'PUL   ', descripcion: 'Pulgadas                    ' },
     { codigo: 96, representacion: 'MM2   ', descripcion: 'Milímetros cuadrados        ' },
-    { codigo: 79, representacion: 'kg/m² ', descripcion: 'Kilogramos s/ metro cuadrado' },
+    { codigo: 79, representacion: 'kg/m2 ', descripcion: 'Kilogramos s/ metro cuadrado' },
     { codigo: 97, representacion: 'AA    ', descripcion: 'Año                         ' },
     { codigo: 98, representacion: 'ME    ', descripcion: 'Mes                         ' },
     { codigo: 99, representacion: 'TN    ', descripcion: 'Tonelada                    ' },
@@ -1074,6 +1140,17 @@ class ConstanteService {
     {
       codigo: 4,
       descripcion: 'Venta a flota de vehículos',
+    },
+  ];
+
+  tiposIdentificacionesVehiculos = [
+    {
+      codigo: 1,
+      descripcion: 'Número de identificación del vehículo',
+    },
+    {
+      codigo: 2,
+      descripcion: 'Número de matrícula del vehículo',
     },
   ];
 
@@ -1379,7 +1456,7 @@ class ConstanteService {
     { codigo: 'BGD', descripcion: 'Bangladesh' },
     { codigo: 'BTN', descripcion: 'Bhután' },
     { codigo: 'IND', descripcion: 'India' },
-    { codigo: 'IRN', descripcion: 'Irán (República Islámica del)' },
+    { codigo: 'IRN', descripcion: 'Irán (República Islámica de)' },
     { codigo: 'MDV', descripcion: 'Maldivas' },
     { codigo: 'NPL', descripcion: 'Nepal' },
     { codigo: 'PAK', descripcion: 'Pakistán' },

@@ -33,8 +33,15 @@ class JSonDteItemService {
         if (data['cliente']['tipoOperacion'] && data['cliente']['tipoOperacion'] === 3) {
           gCamItem['dDncpG'] = stringUtilService.leftZero(item['dncp']['codigoNivelGeneral'], 8);
           gCamItem['dDncpE'] = item['dncp']['codigoNivelEspecifico'];
-          gCamItem['dGtin'] = item['dncp']['codigoGtinProducto'];
-          gCamItem['dGtinPq'] = item['dncp']['codigoNivelPaquete'];
+        }
+
+        if (data['cliente']['tipoOperacion'] && data['cliente']['tipoOperacion'] === 3) {
+          if (item['dncp']['codigoGtinProducto']) {
+            gCamItem['dGtin'] = item['dncp']['codigoGtinProducto'];
+          }
+          if (item['dncp']['codigoNivelPaquete']) {
+            gCamItem['dGtinPq'] = item['dncp']['codigoNivelPaquete'];
+          }
         }
 
         gCamItem['dDesProSer'] = item['descripcion']; // RG 24/2019
@@ -53,8 +60,8 @@ class JSonDteItemService {
           ];
         }
 
-        if (item['observacion'] && item['observacion'].trim().length > 0) {
-          gCamItem['dInfItem'] = item['observacion'].trim();
+        if (item['observacion'] && (item['observacion'] + '').trim().length > 0) {
+          gCamItem['dInfItem'] = (item['observacion'] + '').trim();
         }
 
         if (data['tipoDocumento'] === 7) {
@@ -175,15 +182,7 @@ class JSonDteItemService {
   ) {
     const jsonResult: any = {};
 
-    //Corrige Precio Unitario con la cantidad correcta de decimales
-    /*
     //Mejor no tocar como el usuario envia desde el JSON
-    item['precioUnitario'] = parseFloat(item['precioUnitario']).toFixed(config.decimals);
-    if (data.moneda === 'PYG') {
-      item['precioUnitario'] = parseFloat(item['precioUnitario']).toFixed(config.pygDecimals);
-    }
-    */
-
     jsonResult['dPUniProSer'] = item['precioUnitario'];
 
     jsonResult['dTotBruOpeItem'] = parseFloat(jsonResult['dPUniProSer']) * parseFloat(item['cantidad']);
@@ -226,12 +225,16 @@ class JSonDteItemService {
 
     jsonResult['dDescItem'] = 0;
     if (item['descuento'] && +item['descuento'] > 0) {
-      //Validar que si el descuento es mayor al precio
+      //El descuento por item se pasa asi mismo como viene en el JSON, sin redondeos, igual al precio
+      jsonResult['dDescItem'] = item['descuento'];
+
+      /*      //Validar que si el descuento es mayor al precio
       jsonResult['dDescItem'] = parseFloat(item['descuento']).toFixed(config.decimals);
 
       if (data.moneda === 'PYG') {
         jsonResult['dDescItem'] = parseFloat(jsonResult['dDescItem']).toFixed(config.pygDecimals);
       }
+*/
 
       //FacturaSend calcula solo el % Descuento, no hace falta informar
       jsonResult['dPorcDesIt'] = Math.round((parseFloat(item['descuento']) * 100) / parseFloat(item['precioUnitario']));
@@ -421,10 +424,7 @@ class JSonDteItemService {
 
       //Redondeo inicial a 2 decimales
       if (jsonResult['dBasGravIVA']) {
-        jsonResult['dBasGravIVA'] = parseFloat(jsonResult['dBasGravIVA'].toFixed(8)); //Calculo intermedio, usa max decimales de la SET.
-        /*if (data.moneda === 'PYG') {
-          jsonResult['dBasGravIVA'] = parseFloat(jsonResult['dBasGravIVA'].toFixed(config.pygDecimals));
-        }*/
+        jsonResult['dBasGravIVA'] = parseFloat(jsonResult['dBasGravIVA'].toFixed(config.partialTaxDecimals)); //Calculo intermedio, usa max decimales de la SET.
       }
     }
 
@@ -439,13 +439,7 @@ class JSonDteItemService {
       jsonResult['dLiqIVAItem'] = (jsonResult['dBasGravIVA'] * item['iva']) / 100;
 
       //Redondeo
-      //jsonResult['dLiqIVAItem'] = parseFloat(jsonResult['dLiqIVAItem'].toFixed(config.taxDecimals)); //Calculo intermedio
-      jsonResult['dLiqIVAItem'] = parseFloat(jsonResult['dLiqIVAItem'].toFixed(8));
-      /*
-      Se desabilita por que da error en el calculo global, cuando muy tempranamente se redondea.
-      if (data.moneda === 'PYG') {
-        jsonResult['dLiqIVAItem'] = parseFloat(jsonResult['dLiqIVAItem'].toFixed(config.pygDecimals));
-      }*/
+      jsonResult['dLiqIVAItem'] = parseFloat(jsonResult['dLiqIVAItem'].toFixed(config.partialTaxDecimals));
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -472,10 +466,7 @@ class JSonDteItemService {
 
           //Redondeo inicial a 2 decimales
           if (jsonResult['dBasExe']) {
-            jsonResult['dBasExe'] = parseFloat(jsonResult['dBasExe'].toFixed(8)); //Calculo intermedio, usa max decimales de la SET.
-            /*if (data.moneda === 'PYG') {
-              jsonResult['dBasExe'] = parseFloat(jsonResult['dBasExe'].toFixed(config.pygDecimals));
-            }*/
+            jsonResult['dBasExe'] = parseFloat(jsonResult['dBasExe'].toFixed(config.partialTaxDecimals)); //Calculo intermedio, usa max decimales de la SET.
           }
         }
       }
@@ -502,10 +493,7 @@ class JSonDteItemService {
 
         //Redondeo inicial a 2 decimales
         if (jsonResult['dBasExe']) {
-          jsonResult['dBasExe'] = parseFloat(jsonResult['dBasExe'].toFixed(8)); //Calculo intermedio, usa max decimales de la SET.
-          /*if (data.moneda === 'PYG') {
-            jsonResult['dBasExe'] = parseFloat(jsonResult['dBasExe'].toFixed(config.pygDecimals));
-          }*/
+          jsonResult['dBasExe'] = parseFloat(jsonResult['dBasExe'].toFixed(config.partialTaxDecimals)); //Calculo intermedio, usa max decimales de la SET.
         }
       }
     }

@@ -100,7 +100,7 @@ class JSonDteItemValidateService {
         if (!item['descripcion']) {
           this.errors.push('La descripción del item en data.items[' + i + '].descripcion no puede ser null');
         } else {
-          if (!(item['descripcion'].length >= 1 && item['descripcion'].length <= 2000)) {
+          if (!((item['descripcion'] + '').length >= 1 && (item['descripcion'] + '').length <= 2000)) {
             this.errors.push(
               'La descripción del item (' +
                 item['descripcion'] +
@@ -149,7 +149,7 @@ class JSonDteItemValidateService {
                 item['precioUnitario'] +
                 '" en "PYG" en data.items[' +
                 i +
-                '].precioUnitario, no puede contener mas de 8 decimales',
+                '].precioUnitario, no puede contener más de 8 decimales',
             );
           }
         } else {
@@ -159,13 +159,13 @@ class JSonDteItemValidateService {
                 item['precioUnitario'] +
                 '" en data.items[' +
                 i +
-                '].precioUnitario, no puede contener mas de 8 decimales',
+                '].precioUnitario, no puede contener más de 8 decimales',
             );
           }
         }
 
         if (data.moneda == 'PYG') {
-          if ((item['descuento'] + '').split('.')[1]?.length > (config.pygDecimals || 0)) {
+          /*if ((item['descuento'] + '').split('.')[1]?.length > (config.pygDecimals || 0)) {
             this.errors.push(
               'El Descuento del item "' +
                 item['descuento'] +
@@ -175,6 +175,15 @@ class JSonDteItemValidateService {
                 (config.pygDecimals || 0) +
                 ' decimales',
             );
+          }*/
+          if ((item['descuento'] + '').split('.')[1]?.length > 8) {
+            this.errors.push(
+              'El Descuento del item "' +
+                item['descuento'] +
+                '" en "PYG" en data.items[' +
+                i +
+                '].descuento, no puede contener más de 8 decimales',
+            );
           }
         } else {
           if ((item['descuento'] + '').split('.')[1]?.length > 8) {
@@ -183,7 +192,7 @@ class JSonDteItemValidateService {
                 item['descuento'] +
                 '" en data.items[' +
                 i +
-                '].descuento, no puede contener mas de 8 decimales',
+                '].descuento, no puede contener más de 8 decimales',
             );
           }
         }
@@ -259,8 +268,8 @@ class JSonDteItemValidateService {
           }
         }
 
-        if (item['observacion'] && item['observacion'].trim().length > 0) {
-          if (!(item['observacion'].length >= 1 && item['observacion'].length <= 500)) {
+        if (item['observacion'] && (item['observacion'] + '').trim().length > 0) {
+          if (!((item['observacion'] + '').trim().length >= 1 && (item['observacion'] + '').trim().length <= 500)) {
             this.errors.push(
               'La observación del item (' +
                 item['observacion'] +
@@ -321,6 +330,51 @@ class JSonDteItemValidateService {
         //Automotores
         if (item['sectorAutomotor'] && item['sectorAutomotor']['tipo']) {
           this.generateDatosItemsOperacionSectorAutomotoresValidate(params, data, item, i);
+        }
+
+        if (data['cliente']['tipoOperacion'] && data['cliente']['tipoOperacion'] === 3) {
+          if (!item['dncp']) {
+            this.errors.push(
+              'Debe especificar los datos de la DNCP en ' +
+                'data.items[' +
+                i +
+                '].dncp para el el tipo de operación 3-B2G',
+            );
+          } else {
+            if (
+              !(
+                item['dncp']['codigoNivelGeneral'] &&
+                (item['dncp']['codigoNivelGeneral'] + '').length > 0 &&
+                (item['dncp']['codigoNivelGeneral'] + '').length <= 8
+              )
+            ) {
+              this.errors.push(
+                'Debe especificar los datos de la DNCP en ' +
+                  'data.items[' +
+                  i +
+                  '].dncp.codigoNivelGeneral (hasta 8 digitos) para el el tipo de operación 3-B2G',
+              );
+            } else {
+              item['dncp']['codigoNivelGeneral'] = stringUtilService.leftZero(item['dncp']['codigoNivelGeneral'], 8);
+            }
+
+            if (
+              !(
+                item['dncp']['codigoNivelEspecifico'] &&
+                (item['dncp']['codigoNivelEspecifico'] + '').length >= 3 &&
+                (item['dncp']['codigoNivelEspecifico'] + '').length <= 4
+              )
+            ) {
+              this.errors.push(
+                'Debe especificar los datos de la DNCP en ' +
+                  'data.items[' +
+                  i +
+                  '].dncp.codigoNivelEspecifico (3 o 4 digitos) para el el tipo de operación 3-B2G',
+              );
+            } else {
+              //item['dncp']['codigoNivelEspecifico'] = stringUtilService.leftZero( item['dncp']['codigoNivelEspecifico'], 8);
+            }
+          }
         }
       } //end-for
     }
